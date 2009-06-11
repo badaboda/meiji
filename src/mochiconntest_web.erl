@@ -1,15 +1,9 @@
 
 -module(mochiconntest_web).
 
- 
-
--export([start/1, stop/0, loop/2, feed/3]).
-
- 
+-export([start/1, stop/0, loop/2]).
 
 %% External API
-
- 
 
 start(Options) ->
 
@@ -43,7 +37,7 @@ loop(Req, DocRoot) ->
 
             case Path of
 
-                "test/" ++ IdStr ->
+                "test/" ++ Id ->
 
                     Response = Req:ok({"text/html; charset=utf-8",
 
@@ -51,19 +45,13 @@ loop(Req, DocRoot) ->
 
                                       chunked}),
 
-                    {Id, _} = string:to_integer(IdStr),
+                    Response:write_chunk("Mochiconntest welcomes you! Your Id: " ++ Id ++ "\n"),
 
-                    router:login(Id, self()),
+                    %% router:login(list_to_atom(Id), self()),
 
-                    % Hibernate this process until it receives a message:
-
-                    proc_lib:hibernate(?MODULE, feed, [Response, Id, 1]);
+                    feed(Response, Id, 1);
 
                 _ ->
-
- 
-
- 
 
                     Req:not_found()
 
@@ -87,29 +75,29 @@ loop(Req, DocRoot) ->
 
  
 
-feed(Response, Id, N) ->
+feed(Response, Path, N) ->
 
     receive
 
-    {router_msg, Msg} ->
+        %{router_msg, Msg} ->
 
-        Html = io_lib:format("Recvd msg #~w: ‘~w’<br/>", [N, Msg]),
+        %    Html = io_lib:format("Recvd msg #~w: ‘~s’<br/>", [N, Msg]),
 
-        Response:write_chunk(Html)
+        %    Response:write_chunk(Html);
+
+    after 10000 ->
+
+        Msg = io_lib:format("Chunk ~w for id ~s\n", [N, Path]),
+
+        Response:write_chunk(Msg)
 
     end,
 
-    % Hibernate this process until it receives a message:
-
-    proc_lib:hibernate(?MODULE, feed, [Response, Id, N+1]).
-
- 
+    feed(Response, Path, N+1).
 
  
 
 %% Internal API
-
- 
 
 get_option(Option, Options) ->
 
