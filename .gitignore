@@ -3,3 +3,4 @@ doc
 *.beam
 *.ebin
 *.dump
+*.log
