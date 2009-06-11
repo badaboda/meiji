@@ -1,4 +1,3 @@
-
 -module(floodtest2).
 
 -compile(export_all).
@@ -6,6 +5,8 @@
 -define(SERVERADDR, "10.99.99.24"). % where mochiweb is running
 
 -define(SERVERPORT, 8000).
+
+-export([start/5]).
 
  
 
@@ -15,42 +16,18 @@
 
  
 
-run(Interval) ->
 
-        Config = [
 
-{{10,0,0,1}, 1, 62000},
-{{10,0,0,2}, 62001, 124000}],
-%%{{10,0,0,3}, 124001, 186000},
-%%{{10,0,0,4}, 186001, 248000},
-%%{{10,0,0,5}, 248001, 310000},
-%%{{10,0,0,6}, 310001, 372000},
-%%{{10,0,0,7}, 372001, 434000},
-%%{{10,0,0,8}, 434001, 496000},
-%%{{10,0,0,9}, 496001, 558000},
-%%{{10,0,0,10}, 558001, 620000},
-%%{{10,0,0,11}, 620001, 682000},
-%%{{10,0,0,12}, 682001, 744000},
-%%{{10,0,0,13}, 744001, 806000},
-%%{{10,0,0,14}, 806001, 868000},
-%%{{10,0,0,15}, 868001, 930000},
-%%{{10,0,0,16}, 930001, 992000},
-%%{{10,0,0,17}, 992001, 1054000}],
-        start(Config, Interval).
-
- 
-
-start(Config, Interval) ->
+start(Interval) ->
 
         Monitor = monitor(),
 
-        AdjustedInterval = Interval / length(Config),
 
-        [ spawn(fun start/5, [Lower, Upper, Ip, AdjustedInterval, Monitor])
-
-          || {Ip, Lower, Upper}  <- Config ],
+        spawn(fun() -> floodtest2:start(1, 62000, '10.99.99.23', Interval, Monitor) end),
 
         ok.
+ 
+
 
  
 
@@ -58,7 +35,9 @@ start(LowerID, UpperID, _, _, _) when LowerID == UpperID -> done;
 
 start(LowerID, UpperID, LocalIP, Interval, Monitor) ->
 
-        spawn(fun connect/5, [?SERVERADDR, ?SERVERPORT, LocalIP, "/test/"++LowerID, Monitor]),
+	io:format("xxxx ~s, ~s,  ~s, ~s, ~s~n", [LowerID, UpperID, LocalIP, Interval, Monitor]),
+
+        spawn(?MODULE, connect, [?SERVERADDR, ?SERVERPORT, LocalIP, "/test/"++LowerID, Monitor]),
 
         receive after Interval -> start(LowerID + 1, UpperID, LocalIP, Interval, Monitor) end.
 
@@ -66,7 +45,7 @@ start(LowerID, UpperID, LocalIP, Interval, Monitor) ->
 
 connect(ServerAddr, ServerPort, ClientIP, Path, Monitor) ->
 
-        Opts = [binary, {packet, 0}, {ip, ClientIP}, {reuseaddr, true}, {active, false}],
+        Opts = [binary, {packet, 0}, {ip, ClientIP},  {reuseaddr, true}, {active, false}],
 
         {ok, Sock} = gen_tcp:connect(ServerAddr, ServerPort, Opts),
 

@@ -1,3 +1,4 @@
 .svn
 *.beam
 *.ebin
+*.dump
