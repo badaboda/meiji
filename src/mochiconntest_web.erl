@@ -22,8 +22,11 @@ loop(Req, DocRoot) ->
                                       [{"Server","Mochiweb-Test"}],
                                       chunked}),
                     Response:write_chunk("Mochiconntest welcomes you! Your Id: " ++ Id ++ "\n"),
-                    %% router:login(list_to_atom(Id), self()),
-                    feed(Response, Id, 1);
+
+                    % login using an integer rather than a string
+                    {IdInt, _} = string:to_integer(Id),
+                    router:login(IdInt, self()),
+                    feed(Response, IdInt, 1);
                 _ ->
                     Req:not_found()
             end;
@@ -38,12 +41,9 @@ loop(Req, DocRoot) ->
  
 feed(Response, Path, N) ->
     receive
-        %{router_msg, Msg} ->
-        %    Html = io_lib:format("Recvd msg #~w: ‘~s’<br/>", [N, Msg]),
-        %    Response:write_chunk(Html);
-    after 10000 ->
-        Msg = io_lib:format("Chunk ~w for id ~s\n", [N, Path]),
-        Response:write_chunk(Msg)
+        {router_msg, Msg} ->
+            Html = io_lib:format("Recvd msg #~w: ‘~s’<br/>", [N, Msg]),
+            Response:write_chunk(Html)
     end,
     feed(Response, Path, N+1).
  
