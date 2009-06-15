@@ -1,6 +1,6 @@
 -module(subsmanager).
 -behaviour(gen_server).
--include("/usr/local/lib/erlang/lib/stdlib-1.16.1/include/qlc.hrl").
+-include_lib("stdlib/include/qlc.hrl").
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
