@@ -50,7 +50,7 @@ int main(int argc, char **argv)
     char addr[16];
     char path[32]; // eg: "/test/123"
     int i,octet;
-    for(octet=11; octet<=12; octet++){
+    for(octet=3; octet<=8; octet++){
         sprintf(&addr, "10.99.99.%d", octet);
         for(i=1;i<=NUMCONNS;i++) {
             evhttp_connection = evhttp_connection_new(SERVERADDR, SERVERPORT);
