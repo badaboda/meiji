@@ -41,7 +41,7 @@ handle_call({login, Id, Pid}, _From, State) when is_pid(Pid) ->
     ets:insert(State#state.pid2id, {Pid, Id}),
     ets:insert(State#state.id2pid, {Id, Pid}),
     link(Pid), % tell us if they exit, so we can log them out
-    %io:format("~w logged in as ~w\n",[Pid, Id]),
+    io:format("~w logged in as ~w\n",[Pid, Id]),
     {reply, ok, State};
 
 handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
@@ -55,12 +55,13 @@ handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
             ets:delete(State#state.pid2id, Pid),   % delete all pid->id entries
             [ ets:delete_object(State#state.id2pid, Obj) || Obj <- IdRows ] % and all id->pid
     end,
-    %io:format("pid ~w logged out\n",[Pid]),
+    io:format("pid ~w logged out\n",[Pid]),
     {reply, ok, State};
 
 handle_call({send, Id, Msg}, _From, State) ->
     % get pids who are logged in as this Id
     Pids = [ P || { _Id, P } <- ets:lookup(State#state.id2pid, Id) ],
+    io:format("pids are  ~w \n",[Pids]),
     % send Msg to them all
     M = {router_msg, Msg},
     [ Pid ! M || Pid <- Pids ],
