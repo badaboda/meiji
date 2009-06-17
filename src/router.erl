@@ -1,3 +1,4 @@
+% vim: set sts=4 sw=4 ts=4 et ai:
 -module(router).
 -behaviour(gen_server).
  
@@ -6,6 +7,8 @@
      terminate/2, code_change/3]).
  
 -export([send/2, login/2, logout/1]).
+
+-export([create/2]).
  
 -define(SERVER, global:whereis_name(?MODULE)).
  
@@ -20,11 +23,16 @@ send(Id, Msg) ->
     gen_server:call(?SERVER, {send, Id, Msg}).
  
 login(Id, Pid) when is_pid(Pid) ->
+    %throw("thorw"),
     gen_server:call(?SERVER, {login, Id, Pid}).
  
 logout(Pid) when is_pid(Pid) ->
     gen_server:call(?SERVER, {logout, Pid}).
- 
+
+create(Channel, Pid) ->
+    io:format("call create",[]),
+    gen_server:call(?SERVER, {create, Channel, Pid}).
+    
 %%
  
 init([]) ->
@@ -38,11 +46,13 @@ init([]) ->
     }.
  
 handle_call({login, Id, Pid}, _From, State) when is_pid(Pid) ->
+    io:format("handle_call login ~w",[State#state.pid2id]),
+    %ets:lookup(State#state.id2pid, Id),
     ets:insert(State#state.pid2id, {Pid, Id}),
     ets:insert(State#state.id2pid, {Id, Pid}),
     link(Pid), % tell us if they exit, so we can log them out
     io:format("~w logged in as ~w\n",[Pid, Id]),
-    {reply, ok, State};
+    {reply, xx, State};
 
 handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
     unlink(Pid),
@@ -56,6 +66,13 @@ handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
             [ ets:delete_object(State#state.id2pid, Obj) || Obj <- IdRows ] % and all id->pid
     end,
     io:format("pid ~w logged out\n",[Pid]),
+    {reply, ok, State};
+
+
+handle_call({create, Channel, Pid}, _From, State) ->
+    io:format("handle_call create : ~w\n", [Channel]),
+    ets:insert(State#state.id2pid, {Channel, Pid}),
+    ets:insert(State#state.pid2id, {Pid, Channel}),
     {reply, ok, State};
 
 handle_call({send, Id, Msg}, _From, State) ->
