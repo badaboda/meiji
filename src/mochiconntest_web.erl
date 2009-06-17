@@ -1,3 +1,4 @@
+% vim: set ts=4 sts=4 sw=4 et ai:
 -module(mochiconntest_web).
 -export([start/1, stop/0, loop/2]).
 %% External API
@@ -17,17 +18,22 @@ loop(Req, DocRoot) ->
     io:format("~s connected\n",[Path]),
     case Req:get(method) of
         Method when Method =:= 'GET'; Method =:= 'HEAD' ->
-            case Path of
-                "test/" ++ Id ->
+            case Path of "test/" ++ Id ->
                     {IdInt, _} = string:to_integer(Id),
-                    router:login(IdInt, self()),
-                    Response = Req:ok({"text/html; charset=utf-8",
-                                       [{"Server","Mochiweb-Test"}],
-				       chunked}),
-                    Response:write_chunk("                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"><html><body>Mochiconntest welcomes you! Your Id2: " ++ Id ++ "\n</body></html>"),
-
-                    % login using an integer rather than a string
-                    feed(Response, IdInt, 1);
+                    %try router:login(IdInt, self()) catch throw:X -> io:format("~s\n",[X])end,
+                    Status =router:login(IdInt, self()), 
+                    io:format("return value : ~s\n",[Status]),
+                    if 
+                        Status =:= ok -> 
+                            Response = Req:ok({"text/html; charset=utf-8", [{"Server","Mochiweb-Test"}], chunked}),
+                            Response:write_chunk("                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                Mochiconntest welcomes you! Your Id2: " ++ Id ++ "<br />\n"),
+                            io:format("sended welcome message",[]),
+                            % login using an integer rather than a string
+                            feed(Response, IdInt, 1);
+                        true ->
+                            io:format("404",[]),
+                            Response = Req:not_found()
+                    end;
                 _ ->
                     Req:not_found()
             end;

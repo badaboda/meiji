@@ -5,3 +5,5 @@ doc
 *.dump
 *.log
 *.html
+*.swp
+*.swo
