@@ -8,7 +8,7 @@
  
 -export([send/2, login/2, logout/1]).
 
--export([create/2, destroy/1, dump/0]).
+-export([create/1, destroy/1, dump/0]).
  
 -define(SERVER, global:whereis_name(?MODULE)).
  
@@ -29,8 +29,16 @@ login(Id, Pid) when is_pid(Pid) ->
 logout(Pid) when is_pid(Pid) ->
     gen_server:call(?SERVER, {logout, Pid}).
 
-create(Channel, DummyPid) ->
+create(Channel) ->
     io:format("call create\n",[]),
+    DummyPid = spawn(fun() ->
+        receive 
+            stop ->
+                exit(normal);
+            _ ->
+                ok
+        end
+    end),
     gen_server:call(?SERVER, {create, Channel, DummyPid}).
 
 destroy(Channel) ->
@@ -87,6 +95,8 @@ handle_call({create, Channel, DummyPid}, _From, State) ->
     io:format("handle_call create : ~w\n", [Channel]),
     ets:insert(State#state.id2pid, {Channel, DummyPid}),
     ets:insert(State#state.pid2id, {DummyPid, Channel}),
+    link(DummyPid), % tell us if they exit, so we can log them out
+    io:format("~w logged in as ~w\n",[DummyPid, Channel]),
     {reply, ok, State};
 
 handle_call({destroy, Channel}, _From, State) ->
@@ -97,8 +107,7 @@ handle_call({destroy, Channel}, _From, State) ->
             ok;
         _ ->
             PidRows = [ {P,I} || {I,P} <- IdRows ], % invert tuples
-            ets:delete(State#state.id2pid, Channel), 
-            [ ets:delete_object(State#state.pid2id, Obj) || Obj <- PidRows ] % and all id->pid
+            [P ! stop || {P, I} <- PidRows]
     end,
     {reply, ok, State};
 

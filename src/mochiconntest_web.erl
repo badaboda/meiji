@@ -51,9 +51,11 @@ feed(Response, Path, N) ->
     receive
         {router_msg, Msg} ->
             Html = io_lib:format("~s", [Msg]),
-            Response:write_chunk(Html)
-    end,
-    feed(Response, Path, N+1).
+            Response:write_chunk(Html),
+            feed(Response, Path, N+1);
+        stop ->
+            exit(normal)
+    end.
  
 %% Internal API
 get_option(Option, Options) ->
