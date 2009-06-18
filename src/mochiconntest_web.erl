@@ -26,7 +26,8 @@ loop(Req, DocRoot) ->
                     if 
                         Status =:= ok -> 
                             Response = Req:ok({"text/html; charset=utf-8", [{"Server","Mochiweb-Test"}], chunked}),
-                            Response:write_chunk("                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                Mochiconntest welcomes you! Your Id2: " ++ Id ++ "<br />\n"),
+                            Response:write_chunk(string:copies(" ", 1024) ++ 
+                                                 "Mochiconntest welcomes you! Your Id2: " ++ Id ++ "<br />\n"),
                             io:format("sended welcome message",[]),
                             % login using an integer rather than a string
                             feed(Response, IdInt, 1);

@@ -47,12 +47,19 @@ init([]) ->
  
 handle_call({login, Id, Pid}, _From, State) when is_pid(Pid) ->
     io:format("handle_call login ~w",[State#state.pid2id]),
-    %ets:lookup(State#state.id2pid, Id),
-    ets:insert(State#state.pid2id, {Pid, Id}),
-    ets:insert(State#state.id2pid, {Id, Pid}),
-    link(Pid), % tell us if they exit, so we can log them out
-    io:format("~w logged in as ~w\n",[Pid, Id]),
-    {reply, xx, State};
+    PidRows=ets:lookup(State#state.id2pid, Id),
+    case length(PidRows) of
+        0 ->
+            io:format("channel not found : ~w\n",[Id]),
+            {reply, notfound, State};
+        _ ->
+            ets:insert(State#state.pid2id, {Pid, Id}),
+            ets:insert(State#state.id2pid, {Id, Pid}),
+            link(Pid), % tell us if they exit, so we can log them out
+            io:format("~w logged in as ~w\n",[Pid, Id]),
+            {reply, ok, State}
+    end;
+
 
 handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
     unlink(Pid),
