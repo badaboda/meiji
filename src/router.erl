@@ -8,7 +8,7 @@
  
 -export([send/2, login/2, logout/1]).
 
--export([create/2]).
+-export([create/2, destroy/1, dump/0]).
  
 -define(SERVER, global:whereis_name(?MODULE)).
  
@@ -29,9 +29,16 @@ login(Id, Pid) when is_pid(Pid) ->
 logout(Pid) when is_pid(Pid) ->
     gen_server:call(?SERVER, {logout, Pid}).
 
-create(Channel, Pid) ->
-    io:format("call create",[]),
-    gen_server:call(?SERVER, {create, Channel, Pid}).
+create(Channel, DummyPid) ->
+    io:format("call create\n",[]),
+    gen_server:call(?SERVER, {create, Channel, DummyPid}).
+
+destroy(Channel) ->
+    io:format("call destroy\n",[]),
+    gen_server:call(?SERVER, {destroy, Channel}).
+
+dump() ->
+    gen_server:cast(?SERVER, dump).
     
 %%
  
@@ -76,10 +83,23 @@ handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
     {reply, ok, State};
 
 
-handle_call({create, Channel, Pid}, _From, State) ->
+handle_call({create, Channel, DummyPid}, _From, State) ->
     io:format("handle_call create : ~w\n", [Channel]),
-    ets:insert(State#state.id2pid, {Channel, Pid}),
-    ets:insert(State#state.pid2id, {Pid, Channel}),
+    ets:insert(State#state.id2pid, {Channel, DummyPid}),
+    ets:insert(State#state.pid2id, {DummyPid, Channel}),
+    {reply, ok, State};
+
+handle_call({destroy, Channel}, _From, State) ->
+    io:format("handle_call destroy : ~w\n", [Channel]),
+    IdRows = ets:lookup(State#state.id2pid, Channel),
+    case IdRows of
+        [] ->
+            ok;
+        _ ->
+            PidRows = [ {P,I} || {I,P} <- IdRows ], % invert tuples
+            ets:delete(State#state.id2pid, Channel), 
+            [ ets:delete_object(State#state.pid2id, Obj) || Obj <- PidRows ] % and all id->pid
+    end,
     {reply, ok, State};
 
 handle_call({send, Id, Msg}, _From, State) ->
@@ -100,6 +120,12 @@ handle_info(Info, State) ->
             io:format("Caught unhandled message: ~w\n", [Wtf])
     end,
     {noreply, State}.
+
+handle_cast(dump, State) ->
+    [ets:foldl(fun (A, _AccIn) ->
+        io:format("~w~n", [A])
+    end, [], Tab) || Tab <- [State#state.id2pid, State#state.pid2id]],
+    {noreply, State};
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
