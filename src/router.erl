@@ -64,7 +64,6 @@ init([]) ->
     }.
  
 handle_call({login, Id, Pid}, _From, State) when is_pid(Pid) ->
-    io:format("handle_call login ~w",[State#state.pid2id]),
     PidRows=ets:lookup(State#state.id2pid, Id),
     case length(PidRows) of
         0 ->
@@ -90,12 +89,11 @@ handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
             ets:delete(State#state.pid2id, Pid),   % delete all pid->id entries
             [ ets:delete_object(State#state.id2pid, Obj) || Obj <- IdRows ] % and all id->pid
     end,
-    io:format("pid ~w logged out\n",[Pid]),
+    %io:format("pid ~w logged out\n",[Pid]),
     {reply, ok, State};
 
 
 handle_call({create, Channel, DummyPid}, _From, State) ->
-    io:format("handle_call create : ~w\n", [Channel]),
     ets:insert(State#state.id2pid, {Channel, DummyPid}),
     ets:insert(State#state.pid2id, {DummyPid, Channel}),
     link(DummyPid), % tell us if they exit, so we can log them out
@@ -103,7 +101,6 @@ handle_call({create, Channel, DummyPid}, _From, State) ->
     {reply, ok, State};
 
 handle_call({destroy, Channel}, _From, State) ->
-    io:format("handle_call destroy : ~w\n", [Channel]),
     IdRows = ets:lookup(State#state.id2pid, Channel),
     case IdRows of
         [] ->
