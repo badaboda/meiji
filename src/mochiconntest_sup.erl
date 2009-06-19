@@ -44,7 +44,7 @@ init([]) ->
     Ip = case os:getenv("MOCHIWEB_IP") of false -> "0.0.0.0"; Any -> Any end,   
     WebConfig = [
          {ip, Ip},
-                 {port, 8000},
+                 {port, 80},
                  {docroot, mochiconntest_deps:local_path(["priv", "www"])}],
     Web = {mochiconntest_web,
            {mochiconntest_web, start, [WebConfig]},
