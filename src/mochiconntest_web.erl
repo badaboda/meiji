@@ -18,17 +18,16 @@ loop(Req, DocRoot) ->
     io:format("~s connected\n",[Path]),
     case Req:get(method) of
         Method when Method =:= 'GET'; Method =:= 'HEAD' ->
-            case Path of "test/" ++ Id ->
+            case Path of "meiji/" ++ Id ->
                     {IdInt, _} = string:to_integer(Id),
                     %try router:login(IdInt, self()) catch throw:X -> io:format("~s\n",[X])end,
                     Status =router:login(IdInt, self()), 
                     io:format("return value : ~s\n",[Status]),
                     if 
                         Status =:= ok -> 
-                            Response = Req:ok({"text/html; charset=utf-8", [{"Server","Mochiweb-Test"}], chunked}),
+                            Response = Req:ok({"text/html; charset=utf-8", [{"Server","mochiweb-r101"}], chunked}),
                             Response:write_chunk(string:copies(" ", 1024) ++ 
-                                                 "Mochiconntest welcomes you! Your Id2: " ++ Id ++ "<br />\n"),
-                            io:format("sended welcome message",[]),
+                                                 "meiji id: " ++ Id ++ "\n"),
                             % login using an integer rather than a string
                             feed(Response, IdInt, 1);
                         true ->

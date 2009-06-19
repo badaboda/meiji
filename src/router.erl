@@ -8,7 +8,7 @@
  
 -export([send/2, login/2, logout/1]).
 
--export([create/1, destroy/1, dump/0]).
+-export([create/1, destroy/1, dump/0, get_state/0]).
  
 -define(SERVER, global:whereis_name(?MODULE)).
  
@@ -44,6 +44,9 @@ create(Channel) ->
 destroy(Channel) ->
     io:format("call destroy\n",[]),
     gen_server:call(?SERVER, {destroy, Channel}).
+
+get_state() ->
+    gen_server:call(?SERVER, {get_state}).
 
 dump() ->
     gen_server:cast(?SERVER, dump).
@@ -110,6 +113,9 @@ handle_call({destroy, Channel}, _From, State) ->
             [P ! stop || {P, I} <- PidRows]
     end,
     {reply, ok, State};
+
+handle_call({get_state}, _From, State) ->
+    {reply, {ok, State}, State};
 
 handle_call({send, Id, Msg}, _From, State) ->
     % get pids who are logged in as this Id
