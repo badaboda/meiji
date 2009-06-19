@@ -54,6 +54,9 @@ feed(Response, Path, N) ->
             feed(Response, Path, N+1);
         stop ->
             exit(normal)
+    after 5000 -> 
+        Response:write_chunk("ping"),
+        feed(Response, Path, N+1)
     end.
  
 %% Internal API
