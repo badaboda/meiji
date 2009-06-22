@@ -17,7 +17,11 @@ loop(Req, DocRoot) ->
     "/" ++ Path = Req:get(path),
     case Req:get(method) of
         Method when Method =:= 'GET'; Method =:= 'HEAD' ->
-            case Path of "meiji/" ++ Id ->
+            case Path of 
+                "static/xhr" ->
+                    {ok, Bin} = file:read_file(mochiconntest_deps:local_path(["priv", "www", "xhr.html"])),
+                    Req:ok({"text/html", Bin});
+                "meiji/" ++ Id ->
                     {IdInt, _} = string:to_integer(Id),
                     %try router:login(IdInt, self()) catch throw:X -> io:format("~s\n",[X])end,
                     Status =router:login(IdInt, self()), 
@@ -26,6 +30,20 @@ loop(Req, DocRoot) ->
                             Response = Req:ok({"text/html; charset=utf-8", [{"Server","mochiweb-r101"}], chunked}),
                             Response:write_chunk(string:copies(" ", 1024) ++ 
                                                  "meiji id: " ++ Id ++ "\n"),
+                            % login using an integer rather than a string
+                            feed(Response, IdInt, 1);
+                        true ->
+                            io:format("404",[]),
+                            Response = Req:not_found()
+                    end;
+                "xhr/" ++ Id ->
+                    {IdInt, _} = string:to_integer(Id),
+                    %try router:login(IdInt, self()) catch throw:X -> io:format("~s\n",[X])end,
+                    Status =router:login(IdInt, self()), 
+                    if 
+                        Status =:= ok -> 
+                            Response = Req:ok({"multipart/x-mixed-replace; boundary=xstringx", [{"Server","mochiweb-r101"}], chunked}),
+                            Response:write_chunk("--xstringx\r\nContent-Type: text/html\r\n\r\nsome messages\n"),
                             % login using an integer rather than a string
                             feed(Response, IdInt, 1);
                         true ->
@@ -52,9 +70,9 @@ feed(Response, Path, N) ->
             feed(Response, Path, N+1);
         stop ->
             exit(normal)
-    after 5000 -> 
-        Response:write_chunk("ping"),
-        feed(Response, Path, N+1)
+%    after 5000 -> 
+%        Response:write_chunk("ping"),
+%        feed(Response, Path, N+1)
     end.
  
 %% Internal API

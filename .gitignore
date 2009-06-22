@@ -4,6 +4,6 @@ doc
 *.ebin
 *.dump
 *.log
-*.html
+doc/*.html
 *.swp
 *.swo

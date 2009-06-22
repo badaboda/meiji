@@ -1,0 +1,20 @@
+<html>
+<head>
+  <script>
+    var xhr=new XMLHttpRequest();
+    xhr.multipart = true;
+    xhr.onreadystatechange = function() {
+      console.debug('onreadystatechange: ' + xhr.readyState);
+      if(xhr.readyState  == 3) {
+         console.debug("Received:"  + xhr.responseText); 
+         console.debug("Error code " + xhr.status);
+      }
+    }
+    xhr.open("GET", "/xhr/1", true);
+    xhr.send(null);
+  </script>
+</head>
+<body>
+hello world
+</body>
+</html>
