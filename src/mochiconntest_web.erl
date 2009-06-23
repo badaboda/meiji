@@ -18,9 +18,8 @@ loop(Req, DocRoot) ->
     case Req:get(method) of
         Method when Method =:= 'GET'; Method =:= 'HEAD' ->
             case Path of 
-                "static/xhr" ->
-                    {ok, Bin} = file:read_file(mochiconntest_deps:local_path(["priv", "www", "xhr.html"])),
-                    Req:ok({"text/html", Bin});
+                "static/" ++ StaticPath ->
+                    Req:serve_file(StaticPath, DocRoot);
                 "meiji/" ++ Id ->
                     {IdInt, _} = string:to_integer(Id),
                     %try router:login(IdInt, self()) catch throw:X -> io:format("~s\n",[X])end,
