@@ -77,6 +77,9 @@ feed(Response, Path, N) ->
 %    after 5000 -> 
 %        Response:write_chunk("ping"),
 %        feed(Response, Path, N+1)
+    after 5000 -> 
+        Response:write_chunk("ping<br />"),
+        feed(Response, Path, N+1)
     end.
  
 %% Internal API
