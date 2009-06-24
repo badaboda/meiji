@@ -1,0 +1,34 @@
+<html>
+<head>
+  <script>
+    function foreverFrame(url, callback){
+        // http://cometdaily.com/2007/11/18/ie-activexhtmlfile-transport-part-ii/
+        // note, do not use 'var htmlfile...'
+        htmlfile = new ActiveXObject("htmlfile");
+        htmlfile.open();
+        htmlfile.write(
+            "<html><script>" +
+            "document.domain='" + document.domain + "';" +
+            "</"+"script></html>");
+        htmlfile.close();
+        var ifrDiv = htmlfile.createElement("div");
+        htmlfile.body.appendChild(ifrDiv);
+        ifrDiv.innerHTML = "<iframe src='" + url + "'></iframe>";
+        htmlfile.parentWindow.callback = callback;
+    }
+  </script>
+</head>
+<body>
+ForeverFrame in IE
+
+<div id='log'></div>
+
+  <script>
+    function append(msg) {
+        var l=document.getElementById('log');
+        l.innerHTML=l.innerHTML+"<br>"+msg;
+    }
+    foreverFrame("/meiji/1", append);
+  </script>
+</body>
+</html>

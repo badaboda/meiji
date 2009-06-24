@@ -6,7 +6,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
      terminate/2, code_change/3]).
  
--export([send/2, login/2, logout/1]).
+-export([send/2, send_as_raw/2, login/2, logout/1]).
 
 -export([create/1, destroy/1, dump/0, get_state/0]).
  
@@ -21,6 +21,9 @@ start_link() ->
 % sends Msg to anyone subscribed to Id
 send(Id, Msg) ->
     gen_server:call(?SERVER, {send, Id, Msg}).
+
+send_as_raw(Id, Msg) ->
+    gen_server:call(?SERVER, {send_as_raw, Id, Msg}).
  
 login(Id, Pid) when is_pid(Pid) ->
     %throw("thorw"),
@@ -114,12 +117,21 @@ handle_call({destroy, Channel}, _From, State) ->
 handle_call({get_state}, _From, State) ->
     {reply, {ok, State}, State};
 
+handle_call({send_as_raw, Id, Msg}, _From, State) ->
+    % get pids who are logged in as this Id
+    Pids = [ P || { _Id, P } <- ets:lookup(State#state.id2pid, Id) ],
+    io:format("pids are  ~w \n",[Pids]),
+    % send Msg to them all
+    M = {raw_msg, Msg},
+    [ Pid ! M || Pid <- Pids ],
+    {reply, ok, State};
+
 handle_call({send, Id, Msg}, _From, State) ->
     % get pids who are logged in as this Id
     Pids = [ P || { _Id, P } <- ets:lookup(State#state.id2pid, Id) ],
     io:format("pids are  ~w \n",[Pids]),
     % send Msg to them all
-    M = {router_msg, Msg},
+    M = {callback_msg, Msg},
     [ Pid ! M || Pid <- Pids ],
     {reply, ok, State}.
 

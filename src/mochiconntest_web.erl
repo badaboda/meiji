@@ -12,6 +12,9 @@ start(Options) ->
  
 stop() ->
     mochiweb_http:stop(?MODULE).
+
+format_as_js_callback(Msg) ->
+    iolist_to_binary(io_lib:format("<script>parent.callback(\"~s\")</script>~n", [Msg])).
  
 loop(Req, DocRoot) ->
     "/" ++ Path = Req:get(path),
@@ -63,9 +66,11 @@ loop(Req, DocRoot) ->
  
 feed(Response, Path, N) ->
     receive
-        {router_msg, Msg} ->
-            Html = io_lib:format("~s", [Msg]),
-            Response:write_chunk(Html),
+        {callback_msg, Msg} ->
+            Response:write_chunk(format_as_js_callback(Msg)),
+            feed(Response, Path, N+1);
+        {raw_msg, Msg} ->
+            Response:write_chunk(Msg),
             feed(Response, Path, N+1);
         stop ->
             exit(normal)
