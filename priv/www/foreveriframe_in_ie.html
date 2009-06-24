@@ -8,7 +8,10 @@
         htmlfile.open();
         htmlfile.write(
             "<html><script>" +
-            "document.domain='" + document.domain + "';" +
+            // if this domain setting exists, 
+            //   doesn't work on ie8
+            //   but works on ie6, ie7
+            // "document.domain='" + document.domain + "';" +
             "</"+"script></html>");
         htmlfile.close();
         var ifrDiv = htmlfile.createElement("div");
