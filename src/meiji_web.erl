@@ -1,5 +1,5 @@
 % vim: set ts=4 sts=4 sw=4 et ai:
--module(mochiconntest_web).
+-module(meiji_web).
 -export([start/1, stop/0, loop/2]).
 %% External API
 start(Options) ->

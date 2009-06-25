@@ -1,9 +1,9 @@
 %% @author author <author@example.com>
 %% @copyright YYYY author.
 
-%% @doc Supervisor for the mochiconntest application.
+%% @doc Supervisor for the meiji application.
 
--module(mochiconntest_sup).
+-module(meiji_sup).
 -author('author <author@example.com>').
 
 -behaviour(supervisor).
@@ -45,9 +45,9 @@ init([]) ->
     WebConfig = [
          {ip, Ip},
                  {port, 80},
-                 {docroot, mochiconntest_deps:local_path(["priv", "www"])}],
-    Web = {mochiconntest_web,
-           {mochiconntest_web, start, [WebConfig]},
+                 {docroot, meiji_deps:local_path(["priv", "www"])}],
+    Web = {meiji_web,
+           {meiji_web, start, [WebConfig]},
            permanent, 5000, worker, dynamic},
 
     Processes = [Web],

@@ -1,9 +1,9 @@
 %% @author author <author@example.com>
 %% @copyright YYYY author.
 
-%% @doc Callbacks for the mochiconntest application.
+%% @doc Callbacks for the meiji application.
 
--module(mochiconntest_app).
+-module(meiji_app).
 -author('author <author@example.com>').
 
 -behaviour(application).
@@ -11,12 +11,12 @@
 
 
 %% @spec start(_Type, _StartArgs) -> ServerRet
-%% @doc application start callback for mochiconntest.
+%% @doc application start callback for meiji.
 start(_Type, _StartArgs) ->
-    mochiconntest_deps:ensure(),
-    mochiconntest_sup:start_link().
+    meiji_deps:ensure(),
+    meiji_sup:start_link().
 
 %% @spec stop(_State) -> ServerRet
-%% @doc application stop callback for mochiconntest.
+%% @doc application stop callback for meiji.
 stop(_State) ->
     ok.

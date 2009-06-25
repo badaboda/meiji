@@ -3,7 +3,7 @@
 
 %% @doc TEMPLATE.
 
--module(mochiconntest).
+-module(meiji).
 -author('author <author@example.com>').
 -export([start/0, stop/0]).
 
@@ -16,15 +16,15 @@ ensure_started(App) ->
     end.
         
 %% @spec start() -> ok
-%% @doc Start the mochiconntest server.
+%% @doc Start the meiji server.
 start() ->
-    mochiconntest_deps:ensure(),
+    meiji_deps:ensure(),
     ensure_started(crypto),
-    application:start(mochiconntest).
+    application:start(meiji).
 
 %% @spec stop() -> ok
-%% @doc Stop the mochiconntest server.
+%% @doc Stop the meiji server.
 stop() ->
-    Res = application:stop(mochiconntest),
+    Res = application:stop(meiji),
     application:stop(crypto),
     Res.

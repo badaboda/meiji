@@ -5,7 +5,7 @@
 %%      loading path, and locate resources relative
 %%      to this application's path.
 
--module(mochiconntest_deps).
+-module(meiji_deps).
 -author('author <author@example.com>').
 
 -export([ensure/0, ensure/1]).
