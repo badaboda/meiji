@@ -1,0 +1,20 @@
+<html>
+<head>
+  <script>
+    var xhr=new XMLHttpRequest();
+    xhr.open("GET", "/xhr-multipart/1", true);
+    xhr.onreadystatechange = function() {
+      console.debug('onreadystatechange: ' + xhr.readyState);
+      if(xhr.readyState  == 3) {
+         console.debug("Received:"  + xhr.responseText); 
+         console.debug("Error code " + xhr.status);
+      }
+    }
+    xhr.multipart = true;
+    xhr.send(null);
+  </script>
+</head>
+<body>
+   XHR Streaming with multipart/x-mixed-replace on FF(&gt;=2)
+</body>
+</html>

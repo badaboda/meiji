@@ -1,20 +1,32 @@
 <html>
 <head>
   <script>
-    var xhr=new XMLHttpRequest();
-    xhr.multipart = true;
-    xhr.onreadystatechange = function() {
-      console.debug('onreadystatechange: ' + xhr.readyState);
-      if(xhr.readyState  == 3) {
-         console.debug("Received:"  + xhr.responseText); 
-         console.debug("Error code " + xhr.status);
-      }
+    function debug(msg) {
+      var l=document.getElementById('log');
+      l.innerHTML=l.innerHTML+'<br/>'+msg
     }
-    xhr.open("GET", "/xhr/1", true);
-    xhr.send(null);
+    function xhrStreaming(url, callback) {
+      var xhr=new XMLHttpRequest();
+      xhr.open("GET", url, true);
+      var lastSize;
+      xhr.onreadystatechange = function() {
+        var newTextReceived;
+        if(xhr.readyState  > 2) {
+           newTextReceived = xhr.responseText.substring(lastSize);
+           lastSize = xhr.responseText.length;
+           callback(newTextReceived);
+        }
+      }
+      xhr.send(null);
+    }
   </script>
 </head>
 <body>
-   XHR Streaming with multipart/x-mixed-replace on FF(&gt;=2)
+   XHR Streaming in Even Faster Website, 8.2.4 XHRStreaming
+
+   <div id='log'></div> 
+   <script>
+     xhrStreaming('/meiji/1', function(msg) { debug('callback: '+msg); });
+   </script>
 </body>
 </html>

@@ -38,7 +38,7 @@ loop(Req, DocRoot) ->
                             io:format("404",[]),
                             Response = Req:not_found()
                     end;
-                "xhr/" ++ Id ->
+                "xhr-multipart/" ++ Id ->
                     {IdInt, _} = string:to_integer(Id),
                     %try router:login(IdInt, self()) catch throw:X -> io:format("~s\n",[X])end,
                     Status =router:login(IdInt, self()), 
@@ -77,9 +77,6 @@ feed(Response, Path, N) ->
 %    after 5000 -> 
 %        Response:write_chunk("ping"),
 %        feed(Response, Path, N+1)
-    after 5000 -> 
-        Response:write_chunk("ping<br />"),
-        feed(Response, Path, N+1)
     end.
  
 %% Internal API
