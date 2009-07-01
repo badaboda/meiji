@@ -3,6 +3,9 @@
 import MySQLdb
 from difflib import SequenceMatcher
 import time
+import datetime
+
+import router_client
 
 class ContextCursor:
     def __init__(self, cursor):
@@ -33,42 +36,55 @@ class SportsDatabase(object):
             c.execute(sql)
             r = c.fetchall()
         return r
-        
+
+       
 if __name__=='__main__':
+    gameId ='20090701HHSK0'
     sql = """
         SELECT 
-            hershey.IE_LiveText.gameID    AS gameCode, 
-            hershey.IE_LiveText.LiveText  AS liveText, 
-            hershey.IE_LiveText.SeqNO     AS seqNo, 
-            hershey.IE_LiveText.Inning    AS inning, 
-            hershey.IE_LiveText.bTop      AS bTop, 
-            hershey.IE_LiveText.textStyle AS textStyle 
+            kbo.IE_LiveText.gameID    AS gameCode, 
+            kbo.IE_LiveText.LiveText  AS liveText, 
+            kbo.IE_LiveText.SeqNO     AS seqNo, 
+            kbo.IE_LiveText.Inning    AS inning, 
+            kbo.IE_LiveText.bTop      AS bTop, 
+            kbo.IE_LiveText.textStyle AS textStyle 
         FROM 
-            hershey.IE_LiveText 
+            kbo.IE_LiveText 
         WHERE 
-            hershey.IE_LiveText.gameID = '1'  
+            kbo.IE_LiveText.gameID = '%s'
         ORDER BY 
             seqNo 
-    """
+    """ % (gameId,)
+
     before = ()
+    #router_client.create(gameId)
+    print "created"
     while True:
-        db = SportsDatabase(host='sports-testdb2', user='hanadmin', passwd='damman#2',db='hershey', charset='utf8')
+        db = SportsDatabase(host='sports-livedb1', user='root', passwd='damman#2',db='kbo', charset='utf8')
         with db as db:
            after = db.execute(sql)
 
         cruncher = SequenceMatcher(None, before, after)
         for tag, i1, i2, j1, j2 in cruncher.get_opcodes():
-            #print ("%7s before[%d:%d] (%s) after[%d:%d] (%s)" % (tag, i1, i2, before[i1:i2], j1, j2, after[j1:j2])) 
+            a = []
             if tag == "insert":
-                print "insert",after[j1:j2]
+                for t in after[j1:j2]:
+                    a.append("(%s) %s" % (t[2], t[1]))
+                router_client.send_as_raw(gameId, 
+                    ("<br/> [%s] [%s] " % (datetime.datetime.today(),tag)).join(a).encode("utf8"))
             elif tag == "delete":
-                print "delete",before[i1:i2]
+                for t in before[i1:i2]:
+                    a.append("(%s) %s" % (t[2], t[1]))
+                router_client.send_as_raw(gameId, 
+                    ("<br/> [%s] [%s] " % (datetime.datetime.today(),tag)).join(a).encode("utf8"))
             elif tag == "replace":
-                print "replace from ",before[i1:i2]," to ",after[j1:j2]
+                for t in after[j1:j2]:
+                    a.append("(%s) %s" % (t[2], t[1]))
+                router_client.send_as_raw(gameId, 
+                    ("<br/> [%s] [%s] " % (datetime.datetime.today(),tag)).join(a).encode("utf8"))
             elif tag == "equal":
                 print "equal"
             else:
                 raise ValueError, 'unknown tag %r' % (tag,)
-            #print ("%7s before[%d:%d] after[%d:%d] " % (tag, i1, i2, j1, j2)) 
         before = after
         time.sleep(5)
