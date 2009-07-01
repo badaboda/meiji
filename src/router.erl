@@ -33,7 +33,6 @@ logout(Pid) when is_pid(Pid) ->
     gen_server:call(?SERVER, {logout, Pid}).
 
 create(Channel) ->
-    io:format("call create\n",[]),
     DummyPid = spawn(fun() ->
         receive 
             stop ->
@@ -70,13 +69,13 @@ handle_call({login, Id, Pid}, _From, State) when is_pid(Pid) ->
     PidRows=ets:lookup(State#state.id2pid, Id),
     case length(PidRows) of
         0 ->
-            io:format("channel not found : ~w\n",[Id]),
+            io:format("channel not found : ~p\n",[Id]),
             {reply, notfound, State};
         _ ->
             ets:insert(State#state.pid2id, {Pid, Id}),
             ets:insert(State#state.id2pid, {Id, Pid}),
             link(Pid), % tell us if they exit, so we can log them out
-            io:format("~w logged in as ~w\n",[Pid, Id]),
+            io:format("~p logged in as ~p\n",[Pid, Id]),
             {reply, ok, State}
     end;
 
@@ -92,16 +91,24 @@ handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
             ets:delete(State#state.pid2id, Pid),   % delete all pid->id entries
             [ ets:delete_object(State#state.id2pid, Obj) || Obj <- IdRows ] % and all id->pid
     end,
-    %io:format("pid ~w logged out\n",[Pid]),
+    %io:format("pid ~p logged out\n",[Pid]),
     {reply, ok, State};
 
 
 handle_call({create, Channel, DummyPid}, _From, State) ->
-    ets:insert(State#state.id2pid, {Channel, DummyPid}),
-    ets:insert(State#state.pid2id, {DummyPid, Channel}),
-    link(DummyPid), % tell us if they exit, so we can log them out
-    io:format("~w logged in as ~w\n",[DummyPid, Channel]),
-    {reply, ok, State};
+    PidRows = ets:lookup(State#state.id2pid,Channel),
+    case length(PidRows) of
+        0 ->
+            ets:insert(State#state.id2pid, {Channel, DummyPid}),
+            ets:insert(State#state.pid2id, {DummyPid, Channel}),
+            link(DummyPid), % tell us if they exit, so we can log them out
+            io:format("~p created in as ~p\n",[DummyPid, Channel]),
+            {reply, ok, State};
+        _ ->
+            io:format("~p already created in as ~p\n",[DummyPid, Channel]),
+            {reply, ok, State}
+    end;
+        
 
 handle_call({destroy, Channel}, _From, State) ->
     IdRows = ets:lookup(State#state.id2pid, Channel),
@@ -119,8 +126,9 @@ handle_call({get_state}, _From, State) ->
 
 handle_call({send_as_raw, Id, Msg}, _From, State) ->
     % get pids who are logged in as this Id
+    
     Pids = [ P || { _Id, P } <- ets:lookup(State#state.id2pid, Id) ],
-    io:format("pids are  ~w \n",[Pids]),
+    io:format("pids are  ~p , id is ~p\n",[Pids,Id]),
     % send Msg to them all
     M = {raw_msg, Msg},
     [ Pid ! M || Pid <- Pids ],
@@ -129,7 +137,7 @@ handle_call({send_as_raw, Id, Msg}, _From, State) ->
 handle_call({send, Id, Msg}, _From, State) ->
     % get pids who are logged in as this Id
     Pids = [ P || { _Id, P } <- ets:lookup(State#state.id2pid, Id) ],
-    io:format("pids are  ~w \n",[Pids]),
+    io:format("pids are  ~p \n",[Pids]),
     % send Msg to them all
     M = {callback_msg, Msg},
     [ Pid ! M || Pid <- Pids ],
@@ -141,13 +149,13 @@ handle_info(Info, State) ->
         {'EXIT', Pid, _Why} ->
             handle_call({logout, Pid}, blah, State);
         Wtf ->
-            io:format("Caught unhandled message: ~w\n", [Wtf])
+            io:format("Caught unhandled message: ~p\n", [Wtf])
     end,
     {noreply, State}.
 
 handle_cast(dump, State) ->
     [ets:foldl(fun (A, _AccIn) ->
-        io:format("~w~n", [A])
+        io:format("~p~n", [A])
     end, [], Tab) || Tab <- [State#state.id2pid, State#state.pid2id]],
     {noreply, State};
 

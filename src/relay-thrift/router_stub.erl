@@ -1,16 +1,28 @@
 -module(router_stub).
 -export([start/0,stop/1,handle_function/2]).
--export([ping/1,create/1,destroy/1]).
+-export([ping/1,create/1,destroy/1,send/2,send_as_raw/2]).
 
 ping(Msg) ->
     Msg.
+to_string(BitStr) ->
+    case is_bitstring(BitStr) of
+        true ->
+            bitstring_to_list(BitStr);
+        _ ->
+            BitStr
+    end.
 
 create(Channel) ->
-    router:create(Channel).
+    router:create(to_string(Channel)).
 
 destroy(Channel) ->
-    router:destroy(Channel).
+    router:destroy(to_string(Channel)).
 
+send(Channel,Msg) ->
+    router:send(to_string(Channel),Msg).
+
+send_as_raw(Channel,Msg) ->
+    router:send_as_raw(to_string(Channel),Msg).
 %%
 
 

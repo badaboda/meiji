@@ -26,14 +26,17 @@ try:
   print 'transport.open()'
   transport.open()
 
-  msg = router.ping("hello")
-  print 'ping() : ', msg
+  #msg = router.ping("hello")
+  #print 'ping() : ', msg
 
-  router.create(1)
-  print 'create(1)'
+  #router.create("c1")
+  #print 'create(1)'
 
-  router.destroy(1)
-  print 'destroy(1)'
+  #router.destroy(1)
+  #print 'destroy(1)'
+
+  router.send_as_raw("c1","hello")
+  print 'send()'
 
 
   # Close!

@@ -1,4 +1,4 @@
-ERL_THRIFT=/Users/moongtook/Projects/thrift/lib/erl
+ERL_THRIFT=/Users/badaboda/Projects/thrift/lib/erl
 
 if ! [ -d ${ERL_THRIFT}/ebin ]; then
     echo "Please build the Thrift library by running \`make' in ${ERL_THRIFT}"
