@@ -144,6 +144,11 @@ handle_call({send, Id, Msg}, _From, State) ->
     {reply, ok, State}.
 
 % handle death and cleanup of logged in processes
+handle_info(dump, State) ->
+    io:format("id2pid : ~p~n", [ets:tab2list(State#state.id2pid)]),
+    io:format("pid2id : ~p~n", [ets:tab2list(State#state.pid2id)]),
+    {noreply, State};
+
 handle_info(Info, State) ->
     case Info of
         {'EXIT', Pid, _Why} ->
@@ -152,11 +157,6 @@ handle_info(Info, State) ->
             io:format("Caught unhandled message: ~p\n", [Wtf])
     end,
     {noreply, State}.
-
-handle_info(dump, State) ->
-    io:format("id2pid : ~p~n", [ets:tab2list(State#state.id2pid)]),
-    io:format("pid2id : ~p~n", [ets:tab2list(State#state.pid2id)]),
-    {noreply, State};
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
