@@ -18,8 +18,11 @@ clean:
 	rm -rf $(EBIN_FILES)
 
 httpdcnode: 
-	LD_LIBRARY_PATH=$(PREFIX)/local/lib gcc -o httpdcnode \
+	LD_LIBRARY_PATH=$(PREFIX)/local/lib gcc -o $@ \
         -I$(PREFIX)/local/include \
-        -I$(ERL_HOME)/include httpdcnode.c \
+        -I$(ERL_HOME)/include $< \
         -L$(ERL_HOME)/lib -lei -lerl_interface \
         -dynamic -L$(PREFIX)/local/lib -levent
+
+httpclient: httpclient.c
+	gcc -o $@ $< -levent
