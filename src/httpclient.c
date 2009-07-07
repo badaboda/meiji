@@ -41,8 +41,8 @@ const char *addresses[] = {
     "10.99.99.16",
     "10.99.99.17",
     "10.99.99.18",
-    "10.99.99.150",
-    "10.99.99.151"
+    "10.99.99.40",
+    "10.99.99.41"
 };
  
 // called per chunk received
@@ -77,14 +77,15 @@ int main(int argc, char **argv)
             evhttp_set_timeout(evhttp_connection, 864000); // 10 day timeout
             evhttp_request = evhttp_request_new(reqcb, NULL);
             evhttp_request->chunk_cb = chunkcb;
-            sprintf(&path, "/test/%d", ++connected);
+	    connected+=1;
+            sprintf(&path, "/test/%d", 1);
             if(i%100==0)  
 		printf("Req: %s\t->\t%s\n", addresses[j], &path);
             evhttp_make_request( evhttp_connection, evhttp_request, EVHTTP_REQ_GET, path );
             evhttp_connection_set_timeout(evhttp_request->evcon, 864000);
             event_loop( EVLOOP_NONBLOCK );
             if( connected % 200 == 0 )
-                printf("\nChunks: %d\tBytes: %d\tClosed: %d\n", chunks_recvd, bytes_recvd, closed);
+                printf("\nChunks: %d\tBytes: %d\tConnected: %d\tClosed: %d\n", chunks_recvd, bytes_recvd, connected, closed);
             usleep(SLEEP_MS*1000);
         }
     }
