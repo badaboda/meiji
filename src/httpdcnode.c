@@ -35,6 +35,8 @@ void cleanup(struct evhttp_connection *evcon, void *arg)
 // also sends a welcome chunk.
 void request_handler(struct evhttp_request *req, void *arg)
 {
+        static int uid = 0;
+
         struct evbuffer *buf;
         buf = evbuffer_new();
         if (buf == NULL){
@@ -42,18 +44,6 @@ void request_handler(struct evhttp_request *req, void *arg)
         }
  
         evhttp_add_header(req->output_headers, "Content-Type", "text/html; charset=utf-8");
- 
-        int uid = -1;
-        if(strncmp(evhttp_request_uri(req), "/test/", 6) == 0){
-            uid = atoi( 6+evhttp_request_uri(req) );
-        }
- 
-        if(uid <= 0){
-            evbuffer_add_printf(buf, "User id not found, try /test/123 instead");
-            evhttp_send_reply(req, HTTP_NOTFOUND, "Not Found", buf);
-            evbuffer_free(buf);
-            return;
-        }
  
         if(uid > MAXUSERS){
             evbuffer_add_printf(buf, "Max uid allowed is %d", MAXUSERS);
@@ -69,7 +59,7 @@ void request_handler(struct evhttp_request *req, void *arg)
         evbuffer_free(buf);
  
         // put reference into global uid->connection table:
-        clients[uid] = req;
+        clients[uid++] = req;
         // set close callback
         evhttp_connection_set_closecb( req->evcon, cleanup, &slots[uid] );
 }
@@ -108,22 +98,23 @@ void cnode_run()
         } else {
             if (emsg.type == ERL_REG_SEND) {
                 // get uid and body data from eg: {123, <<"Hello">>}
-                uid = erl_element(1, emsg.msg);
                 msg = erl_element(2, emsg.msg);
-                int userid = ERL_INT_VALUE(uid);
                 char *body = (char *) ERL_BIN_PTR(msg);
                 int body_len = ERL_BIN_SIZE(msg);
                 // Is this userid connected?
-                if(clients[userid]){
-                    fprintf(stderr, "Sending %d bytes to uid %d\n", body_len, userid);                
-                    evbuf = evbuffer_new();
-                    evbuffer_add(evbuf, (const void*)body, (size_t) body_len);
-                    evhttp_send_reply_chunk(clients[userid], evbuf);
-                    evbuffer_free(evbuf);
-                }else{
-                    fprintf(stderr, "Discarding %d bytes to uid %d - user not connected\n",
-                            body_len, userid);                
-                    // noop
+                int l_uid = uid;
+                while (--l_uid >= 0) {
+                    if(clients[l_uid]){
+                        fprintf(stderr, "Sending %d bytes to uid %d\n", body_len, userid);
+                        evbuf = evbuffer_new();
+                        evbuffer_add(evbuf, (const void*)body, (size_t) body_len);
+                        evhttp_send_reply_chunk(clients[userid], evbuf);
+                        evbuffer_free(evbuf);
+                    }else{
+                        fprintf(stderr, "Discarding %d bytes to uid %d - user not connected\n",
+                                body_len, userid);
+                        // noop
+                    }
                 }
                 erl_free_term(emsg.msg);
                 erl_free_term(uid);
