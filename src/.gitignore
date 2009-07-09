@@ -1,3 +1,4 @@
 httpdcnode
 httpclient
 *.html
+*.pyc
