@@ -32,16 +32,16 @@ login(Id, Pid) when is_pid(Pid) ->
 logout(Pid) when is_pid(Pid) ->
     gen_server:call(?SERVER, {logout, Pid}).
 
+dummy() ->
+    receive 
+        stop ->
+            ok;
+        _Other ->
+            dummy()
+    end.
+
 create(Channel) ->
-    DummyPid = spawn(fun() ->
-        receive 
-            stop ->
-                exit(normal);
-            _ ->
-                ok
-        end
-    end),
-    gen_server:call(?SERVER, {create, Channel, DummyPid}).
+    gen_server:call(?SERVER, {create, Channel, spawn(fun dummy/0)}).
 
 destroy(Channel) ->
     gen_server:call(?SERVER, {destroy, Channel}).
