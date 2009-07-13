@@ -20,10 +20,10 @@ start_link() ->
  
 % sends Msg to anyone subscribed to Id
 send(Id, Msg) ->
-    gen_server:call(?SERVER, {send, Id, Msg}).
+    gen_server:call(?SERVER, {send, Id, Msg}, infinity).
 
 send_as_raw(Id, Msg) ->
-    gen_server:call(?SERVER, {send_as_raw, Id, Msg}).
+    gen_server:call(?SERVER, {send_as_raw, Id, Msg}, infinity).
  
 login(Id, Pid) when is_pid(Pid) ->
     %throw("thorw"),
