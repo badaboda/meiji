@@ -6,6 +6,7 @@ doc
 *.ebin
 *.dump
 *.log
-doc/*.html
 *.swp
 *.swo
+*.pyc
+doc/*.html
