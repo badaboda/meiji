@@ -25,16 +25,13 @@ loop(Req, DocRoot) ->
                     Req:serve_file(StaticPath, DocRoot);
                 "meiji/" ++ Id ->
                     Status=router:login(Id, self()), 
-                    io:format("[mochiweb] logged in status : ~p~n",[Status]),
                     if 
                         Status =:= ok -> 
                             Response = Req:ok({"text/html; charset=utf-8", [{"Server","mochiweb-r101"}], chunked}),
                             Response:write_chunk(string:copies(" ", 1024) ++ 
                                                  "meiji id: " ++ Id ++ "\n"),
-                            % login using an integer rather than a string
                             feed(Response, Id, 1);
                         true ->
-                            io:format("[mochiweb] 404~n",[]),
                             Response = Req:not_found()
                     end;
                 "xhr-multipart/" ++ Id ->
@@ -43,10 +40,8 @@ loop(Req, DocRoot) ->
                         Status =:= ok -> 
                             Response = Req:ok({"multipart/x-mixed-replace; boundary=xstringx", [{"Server","mochiweb-r101"}], chunked}),
                             Response:write_chunk("--xstringx\r\nContent-Type: text/html\r\n\r\nsome messages\n"),
-                            % login using an integer rather than a string
                             feed(Response, Id, 1);
                         true ->
-                            io:format("404",[]),
                             Response = Req:not_found()
                     end;
                 _ ->
