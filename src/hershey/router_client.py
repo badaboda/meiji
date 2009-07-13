@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.6
 # vim: et sts=4 sw=4 ts=4 ai :
 import sys
-sys.path.append('./gen-py')
+sys.path.append('../relay-thrift/gen-py')
 
 from thrift import Thrift
 from thrift.transport import TSocket
