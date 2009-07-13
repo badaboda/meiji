@@ -125,22 +125,13 @@ handle_call({get_state}, _From, State) ->
     {reply, {ok, State}, State};
 
 handle_call({send_as_raw, Id, Msg}, _From, State) ->
-    % get pids who are logged in as this Id
-    
-    Pids = [ P || { _Id, P } <- ets:lookup(State#state.id2pid, Id) ],
-    io:format("[send_as_raw] pids are  ~p , id is ~p\n",[Pids,Id]),
-    % send Msg to them all
     M = {raw_msg, Msg},
-    [ Pid ! M || Pid <- Pids ],
+    lists:foreach(fun({_Id, Pid}) -> Pid ! M end, ets:lookup(State#state.id2pid, Id)),
     {reply, ok, State};
 
 handle_call({send, Id, Msg}, _From, State) ->
-    % get pids who are logged in as this Id
-    Pids = [ P || { _Id, P } <- ets:lookup(State#state.id2pid, Id) ],
-    io:format("[send] pids are  ~p \n",[Pids]),
-    % send Msg to them all
     M = {callback_msg, Msg},
-    [ Pid ! M || Pid <- Pids ],
+    lists:foreach(fun({_Id, Pid}) -> Pid ! M end, ets:lookup(State#state.id2pid, Id)),
     {reply, ok, State}.
 
 % handle death and cleanup of logged in processes
