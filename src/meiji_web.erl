@@ -24,10 +24,7 @@ loop(Req, DocRoot) ->
                 "static/" ++ StaticPath ->
                     Req:serve_file(StaticPath, DocRoot);
                 "meiji/" ++ Id ->
-                    %{IdInt, _} = string:to_integer(Id),
-                    IdInt = Id,
-                    %try router:login(IdInt, self()) catch throw:X -> io:format("~s\n",[X])end,
-                    Status =router:login(IdInt, self()), 
+                    Status=router:login(Id, self()), 
                     io:format("[mochiweb] logged in status : ~p~n",[Status]),
                     if 
                         Status =:= ok -> 
@@ -35,21 +32,19 @@ loop(Req, DocRoot) ->
                             Response:write_chunk(string:copies(" ", 1024) ++ 
                                                  "meiji id: " ++ Id ++ "\n"),
                             % login using an integer rather than a string
-                            feed(Response, IdInt, 1);
+                            feed(Response, Id, 1);
                         true ->
                             io:format("[mochiweb] 404~n",[]),
                             Response = Req:not_found()
                     end;
                 "xhr-multipart/" ++ Id ->
-                    {IdInt, _} = string:to_integer(Id),
-                    %try router:login(IdInt, self()) catch throw:X -> io:format("~s\n",[X])end,
-                    Status =router:login(IdInt, self()), 
+                    Status=router:login(Id, self()), 
                     if 
                         Status =:= ok -> 
                             Response = Req:ok({"multipart/x-mixed-replace; boundary=xstringx", [{"Server","mochiweb-r101"}], chunked}),
                             Response:write_chunk("--xstringx\r\nContent-Type: text/html\r\n\r\nsome messages\n"),
                             % login using an integer rather than a string
-                            feed(Response, IdInt, 1);
+                            feed(Response, Id, 1);
                         true ->
                             io:format("404",[]),
                             Response = Req:not_found()
@@ -76,9 +71,6 @@ feed(Response, Path, N) ->
             feed(Response, Path, N+1);
         stop ->
             exit(normal)
-%    after 5000 -> 
-%        Response:write_chunk("ping"),
-%        feed(Response, Path, N+1)
     end.
  
 %% Internal API
