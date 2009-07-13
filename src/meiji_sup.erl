@@ -44,11 +44,15 @@ init([]) ->
     Ip = case os:getenv("MOCHIWEB_IP") of false -> "0.0.0.0"; Any -> Any end,   
     WebConfig = [
          {ip, Ip},
-                 {port, 80},
+                 {port, 8000},
                  {docroot, meiji_deps:local_path(["priv", "www"])}],
     Web = {meiji_web,
            {meiji_web, start, [WebConfig]},
            permanent, 5000, worker, dynamic},
 
-    Processes = [Web],
+    Router = {router,
+           {router, start_link, []},
+           permanent, 5000, worker, dynamic},
+
+    Processes = [Web, Router],
     {ok, {{one_for_one, 10, 10}, Processes}}.
