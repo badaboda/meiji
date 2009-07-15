@@ -29,7 +29,8 @@ loop(Req, DocRoot) ->
                     if 
                         Status =:= ok -> 
                             Response = Req:ok({"text/html; charset=utf-8", [{"Server","mochiweb-r101"}], chunked}),
-                            Response:write_chunk(["meiji id: ", BinId, "\n"]),
+                            Response:write_chunk([list_to_binary(string:copies(" ", 1024)), "meiji id: ", BinId, "\n"]),
+                            garbage_collect(),
                             feed(Response, BinId, 1);
                         true ->
                             Response = Req:not_found()
