@@ -65,16 +65,15 @@ init([]) ->
     }.
  
 handle_call({login, Id, Pid}, _From, State) when is_pid(Pid) ->
-    PidRows=ets:lookup(State#state.id2pid, Id),
-    case length(PidRows) of
-        0 ->
-            io:format("[login] channel not found : ~p\n",[Id]),
+    case ets:member(State#state.id2pid, Id) of
+        false ->
+            %io:format("[login] channel not found : ~p\n",[Id]),
             {reply, notfound, State};
-        _ ->
+        true ->
             ets:insert(State#state.pid2id, {Pid, Id}),
             ets:insert(State#state.id2pid, {Id, Pid}),
             link(Pid), % tell us if they exit, so we can log them out
-            io:format("[login] ~p logged in as ~p\n",[Pid, Id]),
+            %io:format("[login] ~p logged in as ~p\n",[Pid, Id]),
             {reply, ok, State}
     end;
 
@@ -95,15 +94,14 @@ handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
 
 
 handle_call({create, Channel, DummyPid}, _From, State) ->
-    PidRows = ets:lookup(State#state.id2pid,Channel),
-    case length(PidRows) of
-        0 ->
+    case ets:member(State#state.id2pid,Channel) of
+        false ->
             ets:insert(State#state.id2pid, {Channel, DummyPid}),
             ets:insert(State#state.pid2id, {DummyPid, Channel}),
             link(DummyPid), % tell us if they exit, so we can log them out
             io:format("[create] ~p created in as ~p\n",[DummyPid, Channel]),
             {reply, ok, State};
-        _ ->
+        true ->
             io:format("[create] ~p already created in as ~p\n",[DummyPid, Channel]),
             {reply, ok, State}
     end;
