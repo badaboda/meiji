@@ -24,23 +24,24 @@ loop(Req, DocRoot) ->
                 "static/" ++ StaticPath ->
                     Req:serve_file(StaticPath, DocRoot);
                 "meiji/" ++ Id ->
-                    Status=router:login(Id, self()), 
+                    BinId=list_to_binary(Id),
+                    Status=router:login(BinId, self()), 
                     if 
                         Status =:= ok -> 
                             Response = Req:ok({"text/html; charset=utf-8", [{"Server","mochiweb-r101"}], chunked}),
-                            Response:write_chunk(string:copies(" ", 1024) ++ 
-                                                 "meiji id: " ++ Id ++ "\n"),
-                            feed(Response, Id, 1);
+                            Response:write_chunk([list_to_binary(string:copies(" ", 1024)), "meiji id: ", BinId, "\n"]),
+                            feed(Response, BinId, 1);
                         true ->
                             Response = Req:not_found()
                     end;
                 "xhr-multipart/" ++ Id ->
-                    Status=router:login(Id, self()), 
+                    BinId=list_to_binary(Id),
+                    Status=router:login(BinId, self()), 
                     if 
                         Status =:= ok -> 
                             Response = Req:ok({"multipart/x-mixed-replace; boundary=xstringx", [{"Server","mochiweb-r101"}], chunked}),
                             Response:write_chunk("--xstringx\r\nContent-Type: text/html\r\n\r\nsome messages\n"),
-                            feed(Response, Id, 1);
+                            feed(Response, BinId, 1);
                         true ->
                             Response = Req:not_found()
                     end;
@@ -65,7 +66,9 @@ feed(Response, Path, N) ->
             Response:write_chunk(Msg),
             feed(Response, Path, N+1);
         stop ->
-            exit(normal)
+            exit(normal);
+        Other ->
+            io:format("ignored messages: ~p~n", [Other])
     end.
  
 %% Internal API
