@@ -59,8 +59,8 @@ init([]) ->
     process_flag(trap_exit, true),
     % use ets for routing tables
     {ok, #state{
-                pid2id = ets:new(?MODULE, [bag]),
-                id2pid = ets:new(?MODULE, [bag])
+                pid2id = ets:new(?MODULE, [duplicate_bag]),
+                id2pid = ets:new(?MODULE, [duplicate_bag])
                }
     }.
  
