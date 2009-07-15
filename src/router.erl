@@ -80,16 +80,10 @@ handle_call({login, Id, Pid}, _From, State) when is_pid(Pid) ->
 
 handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
     unlink(Pid),
-    PidRows = ets:lookup(State#state.pid2id, Pid),
-    case PidRows of
-        [] ->
-            ok;
-        _ ->
-            IdRows = [ {I,P} || {P,I} <- PidRows ], % invert tuples
-            ets:delete(State#state.pid2id, Pid),   % delete all pid->id entries
-            [ ets:delete_object(State#state.id2pid, Obj) || Obj <- IdRows ] % and all id->pid
-    end,
-    %io:format("pid ~p logged out\n",[Pid]),
+    lists:foreach(fun({Pid, Id}) ->
+        ets:delete_object(State#state.id2pid, {Id, Pid})
+    end, ets:lookup(State#state.pid2id, Pid)),
+    ets:delete(State#state.pid2id, Pid),   % delete all pid->id entries
     {reply, ok, State};
 
 
