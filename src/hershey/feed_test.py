@@ -27,11 +27,13 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
     def tearDown(self):
         self.db.close()
 
-    def new_datum(self, klass):
+    def new_datum(self, klass, *args):
+        if args:
+            return klass(self.db, *args)
         return klass(self.db, self.game_code)
 
-    def new_scoreboard_datum(self, klass, game_code):
-        return klass(self.db, game_code)
+    def bootstrap_dict(self, klass, *args):
+        return self.new_datum(klass, *args).as_bootstrap_dict()
 
     def assertHierachy(self, path, hierachy_dict):
         d=hierachy_dict
@@ -44,11 +46,11 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
 
     def testRegistryPlayerProfile(self):
         self.assertHierachy('registry:player:96441:profile', 
-                             self.new_datum(kbo.RegistryPlayerProfile).as_bootstrap_dict())
+                             self.bootstrap_dict(kbo.RegistryPlayerProfile))
         
     def testRegistryPlayerSeason(self):
         self.assertHierachy('registry:player:72139:batter:season', 
-                            self.new_datum(kbo.RegistryPlayerBatterSeason).as_bootstrap_dict())
+                            self.bootstrap_dict(kbo.RegistryPlayerBatterSeason))
 
     def testScoreBoardForCurrentGame(self):
         code=self.game_code
@@ -57,7 +59,7 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
                    (kbo.ScoreBoardAway, code),
                    (kbo.ScoreBoardBases, code), 
                    (kbo.ScoreBoardWatingBatters, code),]
-        initial_dicts=[self.new_scoreboard_datum(klass, game_code).as_bootstrap_dict() for klass, game_code in specs]
+        initial_dicts=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
         #p(merged)
         self.assertHierachy("registry:scoreboard:%s:home" % code, merged)
@@ -78,14 +80,14 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
                        (kbo.ScoreBoardAway, game_code),
                        (kbo.ScoreBoardBases, game_code), 
                        (kbo.ScoreBoardWatingBatters, game_code),]
-            initial_dicts+=[self.new_scoreboard_datum(klass, game_code).as_bootstrap_dict() for klass, game_code in specs]
+            initial_dicts+=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
         #p(merged)
 
     def testLeague(self):
         initial_dicts=[
-            kbo.LeagueTodayGames(self.db, self.game_code, datetime.datetime(2009, 07, 11)).as_bootstrap_dict(), 
-            kbo.LeaguePastVsGames(self.db, self.game_code).as_bootstrap_dict()
+            self.bootstrap_dict(kbo.LeagueTodayGames, self.game_code, datetime.datetime(2009, 07, 11)),
+            self.bootstrap_dict(kbo.LeaguePastVsGames, self.game_code)
         ]
         merged=self.merge(initial_dicts)
         #p(merged)
@@ -101,12 +103,12 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
                     kbo.RegistryPlayerPitcherSeason, 
                     kbo.RegistryTeamSeason, 
                     kbo.RegistryTeamProfile, ]
-        initial_dicts=[self.new_datum(klass).as_bootstrap_dict() for klass in klasses]
+        initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
         #p(self.merge(initial_dicts))
 
     def testLiveTextAndMeta(self):
         klasses = [kbo.Meta, kbo.GameCode]
-        initial_dicts=[self.new_datum(klass).as_bootstrap_dict() for klass in klasses]
+        initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
         #p(self.merge(initial_dicts))
         
 
