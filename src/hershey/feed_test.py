@@ -186,11 +186,6 @@ class FeedAsDeltaGeneratorInput(unittest.TestCase):
             except ValueError:
                 raise ValueError('%s does not support as_delta_generator_input' % repr(klass))
 
-    def testDeltaLoop(self):
-        import delta 
-        delta.loop(self.delta, self.game_code)
-        delta.loop(self.delta, self.game_code)
-
 class DictMergeTest(unittest.TestCase):
     def test_merge_insert(self):
         initial_data = \
