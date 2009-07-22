@@ -78,7 +78,7 @@ class RelayDatum:
 
     def ensure_rows(self):
         if not self.rows:
-            self.rows=self.fetch()
+            self.rows=[self.postprocess(row) for row in self.fetch()]
 
     def as_delta_generator_input(self):
         self.ensure_rows()
@@ -114,7 +114,10 @@ class RelayDatum:
             return hierachy_dict(path, self.rows)
 
     def postprocess(self, row):
-        return feed.lowercase_dict_key(row)
+        if type(row) == types.DictType:
+            return feed.lowercase_dict_key(row)
+        else:
+            return row
 
 class RelayDatumAsList(RelayDatum):
     def as_bootstrap_dict(self):
@@ -189,7 +192,7 @@ class RegistryPlayerProfile(RelayDatum):
                         and pr.gameID = '%s' 
                 """ % self.game_code)
         rows=batter_rows+pitcher_rows    
-        return [self.postprocess(row) for row in rows]
+        return rows
 
 class RegistryPlayerBatterSeason(RelayDatum):
     def json_path(self):
@@ -203,7 +206,7 @@ class RegistryPlayerBatterSeason(RelayDatum):
                         AND substring(br.gameID,1,4) = b.GYEAR
                         AND br.gameID = '%s' 
                 """ % self.game_code)
-        return [self.postprocess(row) for row in rows]
+        return rows
 
 class RegistryPlayerBatterToday(RelayDatum):
     def json_path(self):
@@ -222,7 +225,7 @@ class RegistryPlayerBatterToday(RelayDatum):
                     FROM IE_BatterRecord br
                     WHERE br.gameID = '%s' 
                 """ % self.game_code)
-        return [self.postprocess(row) for row in rows]
+        return rows
 
 class RegistryPlayerPitcherToday(RelayDatum):
     def json_path(self):
@@ -242,7 +245,7 @@ class RegistryPlayerPitcherToday(RelayDatum):
                     FROM IE_PitcherRecord pr
                     WHERE pr.gameID = '%s' 
                 """ % self.game_code)
-        return [self.postprocess(row) for row in rows]
+        return rows
 
 class RegistryPlayerPitcherSeason(RelayDatum):
     def json_path(self):
@@ -263,7 +266,7 @@ class RegistryPlayerPitcherSeason(RelayDatum):
                         AND pt.PCODE = pr.PlayerID
                         AND substring(pr.gameID,1,4) = pt.GYEAR
                 """ % self.game_code)
-        return [self.postprocess(row) for row in rows]
+        return rows
 
 class RegistryTeamSeason(RelayDatum):
     def json_path(self):
@@ -276,7 +279,7 @@ class RegistryTeamSeason(RelayDatum):
                     from Kbo_TeamRank tr
                     where substring('%s',1,4) = tr.GYEAR
                 """ % (self.game_code))
-        return [self.postprocess(row) for row in rows]
+        return rows
 
 class RegistryTeamProfile(RelayDatum):
     def json_path(self):
@@ -291,7 +294,7 @@ class RegistryTeamProfile(RelayDatum):
                            region 
                     FROM TEAM
                 """)
-        return [self.postprocess(row) for row in rows]
+        return rows
 
 class LeagueTodayGames(RelayDatumAsList):
     def __init__(self, db, game_code, game_datetime=datetime.datetime.now()):
@@ -391,7 +394,7 @@ class ScoreBoard(RelayDatum):
         """ % self.game_code)[0]
         row1.update(row3)
 
-        return [self.postprocess(row) for row in [row1]]
+        return [row1]
 
     def postprocess(self, row):
         row=RelayDatum.postprocess(self, row)
@@ -431,7 +434,7 @@ class ScoreBoardHomeOrAwayMixIn:
                 ORDER BY inning asc
         """ % (self.game_code, bhome))
         row['inning']=','.join([str(i['score']) for i in innings])
-        return [self.postprocess(row) for row in [row]]
+        return [row]
 
 
 class ScoreBoardHome(RelayDatum, ScoreBoardHomeOrAwayMixIn):
