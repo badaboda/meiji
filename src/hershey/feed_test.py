@@ -23,9 +23,6 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
                             cursorclass=MySQLdb.cursors.DictCursor)
         self.game_code ='20090701HHSK0'
 
-        self.consumer = mock.MockJavascriptConsumer()
-        self.delta=feed.DeltaGenerator(self.consumer)
-
     def tearDown(self):
         self.db.close()
 
@@ -45,18 +42,6 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
         return reduce(lambda x,y: merge._merge_insert(x, y), dicts)
 
     def testRegistryPlayerProfile(self):
-        d=self.new_datum(feed.RegistryPlayerProfile)
-        d.as_delta_generator_input()
-        self.delta.feed(d)
-
-        d=self.new_datum(feed.RegistryPlayerProfile)
-        d.as_delta_generator_input()
-        d.rows[0]['name']='xxx'
-        self.delta.feed(d)
-        
-        #p(self.consumer.lst)
-
-    def testRegistryPlayerProfile(self):
         self.assertHierachy('registry:player:96441:profile', 
                              self.new_datum(feed.RegistryPlayerProfile).as_bootstrap_dict())
         
@@ -73,7 +58,7 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
                    (feed.ScoreBoardWatingBatters, code),]
         initial_dicts=[self.new_scoreboard_datum(klass, game_code).as_bootstrap_dict() for klass, game_code in specs]
         merged=self.merge(initial_dicts)
-        p(merged)
+        #p(merged)
         self.assertHierachy("registry:scoreboard:%s:home" % code, merged)
         self.assertHierachy("registry:scoreboard:%s:away" % code, merged)
         self.assertHierachy("registry:scoreboard:%s:waiting_batters" % code, merged)
@@ -121,7 +106,7 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
     def testLiveTextAndMeta(self):
         klasses = [feed.Meta, feed.GameCode]
         initial_dicts=[self.new_datum(klass).as_bootstrap_dict() for klass in klasses]
-        p(self.merge(initial_dicts))
+        #p(self.merge(initial_dicts))
         
 
 class DeltaGeneratorTest(unittest.TestCase):
@@ -158,6 +143,50 @@ class DeltaGeneratorTest(unittest.TestCase):
             ["db.registry.players['79260'].profile={'pcode': '79260', 'name': %s};"%repr('장원삼2')], 
             self.consumer.lst)
         
+
+class FeedAsDeltaGeneratorInput(unittest.TestCase):
+    def setUp(self):
+        self.db = feed.SportsDatabase(host='sports-livedb1', 
+                            user='root', passwd='damman#2',
+                            db='kbo', charset='utf8',
+                            cursorclass=MySQLdb.cursors.DictCursor)
+        self.game_code ='20090701HHSK0'
+
+        self.consumer = mock.MockJavascriptConsumer()
+        self.delta=feed.DeltaGenerator(self.consumer)
+
+    def testRegistryPlayerProfile(self):
+        d=feed.RegistryPlayerProfile(self.db, self.game_code)
+        self.delta.feed(d)
+
+        d=feed.RegistryPlayerProfile(self.db, self.game_code)
+        d.ensure_rows()
+        d.rows[0]['name']='xxx'
+        self.delta.feed(d)
+        
+        self.assert_(len(self.consumer.lst) > 0)
+
+    def testAnotherKindFeedShouldNotGenerateDelta(self):
+        d=feed.RegistryPlayerProfile(self.db, self.game_code)
+        self.delta.feed(d)
+
+        d=feed.RegistryPlayerBatterSeason(self.db, self.game_code)
+        d.ensure_rows()
+        self.delta.feed(d)
+        
+        self.assertEquals(0, len(self.consumer.lst))
+
+    def testAllDatumCouldCallAsDeltaGeneratorInput(self):
+        for klass in feed.datums+feed.league_datums+feed.scoreboard_datums:
+            try:
+                klass(self.db, self.game_code).as_delta_generator_input()
+            except ValueError:
+                raise ValueError('%s does not support as_delta_generator_input' % repr(klass))
+
+    def testDeltaLoop(self):
+        import delta 
+        delta.loop(self.delta, self.game_code)
+        delta.loop(self.delta, self.game_code)
 
 class DictMergeTest(unittest.TestCase):
     def test_merge_insert(self):

@@ -42,47 +42,28 @@ def mypprint(o, write=write):
 
 if __name__=='__main__':
     game_code ='20090701HHSK0'
-    datums = [feed.RegistryPlayerProfile,
-                    feed.RegistryPlayerBatterSeason,
-                    feed.RegistryPlayerBatterToday,
-                    feed.RegistryPlayerPitcherToday, 
-                    feed.RegistryPlayerPitcherSeason, 
-                    feed.RegistryTeamSeason, 
-                    feed.RegistryTeamProfile,
-                    feed.LiveText, 
-                    feed.Meta,
-                    feed.GameCode]
-
-    league_datums = [ feed.LeagueTodayGames, 
-                      feed.LeaguePastVsGames ]
-
-    scoreboard_datums = [feed.ScoreBoard,
-                       feed.ScoreBoardHome, 
-                       feed.ScoreBoardAway,
-                       feed.ScoreBoardBases, 
-                       feed.ScoreBoardWatingBatters,]
 
     db = feed.SportsDatabase(host='sports-livedb1', 
                         user='root', passwd='damman#2',
                         db='kbo', charset='utf8',
                         cursorclass=MySQLdb.cursors.DictCursor)
 
-    initial_dicts=[]
-    for klass in datums:
+    bootstrap_dicts=[]
+    for klass in feed.datums:
         datum=klass(db, game_code)
-        initial_dicts.append(datum.as_initial_dict())
+        bootstrap_dicts.append(datum.as_bootstrap_dict())
 
     league_datums = [ feed.LeagueTodayGames(db, game_code), 
                       feed.LeaguePastVsGames(db, game_code) ]
     game_codes = [game_code]
-    for datum in league_datums:
-        initial_dicts.append(datum.as_initial_dict())
+    for datum in feed.league_datums:
+        bootstrap_dicts.append(datum.as_bootstrap_dict())
         game_codes += datum.rows
 
-    for klass in scoreboard_datums:
+    for klass in feed.scoreboard_datums:
         for c in game_codes:
-            initial_dicts.append(klass(db, c).as_initial_dict())
+            bootstrap_dicts.append(klass(db, c).as_bootstrap_dict())
 
-    merged=reduce(lambda x,y: merge._merge_insert(x, y), initial_dicts)
+    merged=reduce(lambda x,y: merge._merge_insert(x, y), bootstrap_dicts)
     mypprint(merged)
 

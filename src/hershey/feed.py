@@ -12,6 +12,8 @@ import mock_router_client as router_client
 
 def _dict_to_tuple_recursive(dict):
     result=[]
+    if type(dict) != types.DictType:
+        raise ValueError('DicType needed')
     for k,v in dict.items():
         if type(v)==types.DictType:
             result.append((k, _dict_to_tuple_recursive(v)))
@@ -224,6 +226,10 @@ class GameCode(RelayDatumAsAtom):
     def fetch(self, game_code):
         return [game_code]
 
+    def as_delta_generator_input(self):
+        self.ensure_rows()
+        return tuple(self.rows)
+
 class RegistryPlayerProfile(RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:profile"
@@ -362,6 +368,10 @@ class LeagueTodayGames(RelayDatumAsList):
                 """ % self.game_datetime.strftime("%Y%m%d"))
         return [row['game_code'] for row in rows]
 
+    def as_delta_generator_input(self):
+        self.ensure_rows()
+        return tuple(self.rows)
+
 class LeaguePastVsGames(RelayDatumAsList):
     def __init__(self, db, game_code):
         RelayDatumAsList.__init__(self, db, game_code)
@@ -386,6 +396,9 @@ class LeaguePastVsGames(RelayDatumAsList):
                 LIMIT 3
                 """ % (self.game_code))
         return [row['game_code'] for row in rows]
+    def as_delta_generator_input(self):
+        self.ensure_rows()
+        return tuple(self.rows)
 
 class ScoreBoard(RelayDatum):
     def json_path(self):
@@ -558,19 +571,18 @@ class ScoreBoardWatingBatters(RelayDatumAsList):
 class DeltaGenerator:
     def __init__(self, consumer):
         self.consumer = consumer
-        self.old = tuple()
+        self.old_input = {}
 
     def feed(self, datum):
         current = datum.as_delta_generator_input()
-        if self.old:
-            #print '---', self.old 
-            #print '---', current
-            for tag, list_of_pair in self.diff_seq_specs(self.old, current):
+        json_path=datum.json_path()
+        if self.old_input.has_key(json_path):
+            for tag, list_of_pair in self.diff_seq_specs(self.old_input[json_path], current):
                 if tag == 'equal':
                     pass
                 else:
-                    self.consumer.feed(tag, datum.json_path(), dict(list_of_pair))
-        self.old = current 
+                    self.consumer.feed(tag, json_path, dict(list_of_pair))
+        self.old_input[json_path] = current
 
     def diff_seq_specs(self, old, current):
         cruncher = SequenceMatcher(None, old, current)
@@ -594,4 +606,51 @@ class DeltaGenerator:
             else:
                 raise ValueError, 'unknown tag %s' % (tag,)
 
+class JavascriptSysoutConsumer:
+    def __init__(self):
+        pass
+    def feed(self, tag, json_path, dict):
+        if tag in ['insert', 'replace']:
+            print self.insert_javascript(json_path, dict)
+        elif tag=='delete':
+            print self.delete_javascript(json_path, dict)
+        else:
+            raise NotImplementedError
 
+    def insert_javascript(self, json_path, dict):
+        return "%s=%s;" % (self._js_variable("db", json_path, dict), str(dict))
+        
+    def delete_javascript(self, json_path, dict):
+        return "delete %s;" % (self._js_variable("db", json_path, dict))
+
+    def _js_variable(self, root, json_path, dict):
+        keys=json_path.split(":")
+        js_key_parts=[root]
+        for i, k in enumerate(keys):
+            is_placeholder=lambda s: s.startswith("**")
+            if is_placeholder(k):
+                js_key_parts.append("['%s']" % dict[k[2:]])    
+            else:
+                js_key_parts.append(".%s" % k)
+        return ''.join(js_key_parts) 
+
+
+datums = [RegistryPlayerProfile,
+            RegistryPlayerBatterSeason,
+            RegistryPlayerBatterToday,
+            RegistryPlayerPitcherToday, 
+            RegistryPlayerPitcherSeason, 
+            RegistryTeamSeason, 
+            RegistryTeamProfile,
+            LiveText, 
+            Meta,
+            GameCode]
+
+league_datums = [ LeagueTodayGames, 
+                  LeaguePastVsGames ]
+
+scoreboard_datums = [ScoreBoard,
+                   ScoreBoardHome, 
+                   ScoreBoardAway,
+                   ScoreBoardBases, 
+                   ScoreBoardWatingBatters,]
