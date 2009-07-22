@@ -2,8 +2,12 @@
 import MySQLdb
 import MySQLdb.cursors
 
-import types
+import types, exceptions, sys
 from difflib import SequenceMatcher
+
+def write(o):
+    sys.stdout.write(str(o))
+    #sys.stdout.write("\n")
 
 def _dict_to_tuple_recursive(dict):
     result=[]
@@ -29,6 +33,15 @@ def hierachy_dict(hierachy_parent_names, leaf):
         r=r[n]
     r[hierachy_parent_names[-1]]=leaf
     return orig
+
+class Error(exceptions.Exception):
+    pass
+
+class NoDataFoundError(exceptions.Exception):
+    pass
+
+class NoDataFoundForScoreboardError(exceptions.Exception):
+    pass
 
 class ContextCursor:
     def __init__(self, cursor):
@@ -185,6 +198,8 @@ class RelayDatum(object):
 
     def postprocess(self, row):
         if type(row) == types.DictType:
+            if row.has_key('INPUTTIME'):
+                del row['INPUTTIME']
             return lowercase_dict_key(row)
         else:
             return row
@@ -200,4 +215,37 @@ class RelayDatumAsAtom(RelayDatum):
         self.ensure_rows()
         path=self.json_path().split(':')
         return hierachy_dict(path, self.rows[0])
+
+def mypprint(o, write=write):
+    if type(o)==type({}):
+        write('{')
+        for k in o.keys():
+            write('"%s":'% k)
+            mypprint(o[k])
+            write(',')
+        write('}')
+    elif type(o)==type([]):
+        write('[')
+        for e in o:
+            mypprint(e)
+            write(',',)
+        write(']')
+    elif type(o)==type((None,)):
+        write('[')
+        for e in o:
+            mypprint(e)
+            write(',',)
+        write(']')
+    elif type(o)==type(u''):
+        write('"%s"' % o.encode('unicode_escape'))
+    elif type(o)==type(''):
+        write('"%s"' % o)
+    elif type(o) in [type(0), type(0L), type(0.3)]:
+        write(o)
+    elif type(o)==type(True):
+        write(str(o).lower())
+    elif type(o)==type(None):
+        write('null')
+    else:
+        raise ValueError(type(o))
 
