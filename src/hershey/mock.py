@@ -1,33 +1,12 @@
 import types 
 import feed
 
-class MockJavascriptConsumer:
+class MockJavascriptConsumer(feed.JavascriptSysoutConsumer):
     def __init__(self):
+        feed.JavascriptSysoutConsumer.__init__(self)
         self.lst = []
-    def feed(self, tag, json_path, dict):
-        if tag in ['insert', 'replace']:
-            self.lst.append(self.insert_javascript(json_path, dict))
-        elif tag=='delete':
-            self.lst.append(self.delete_javascript(json_path, dict))
-        else:
-            raise NotImplementedError
-
-    def insert_javascript(self, json_path, dict):
-        return "%s=%s;" % (self._js_variable("db", json_path, dict), str(dict))
-        
-    def delete_javascript(self, json_path, dict):
-        return "delete %s;" % (self._js_variable("db", json_path, dict))
-
-    def _js_variable(self, root, json_path, dict):
-        keys=json_path.split(":")
-        js_key_parts=[root]
-        for i, k in enumerate(keys):
-            is_placeholder=lambda s: s.startswith("**")
-            if is_placeholder(k):
-                js_key_parts.append("['%s']" % dict[k[2:]])    
-            else:
-                js_key_parts.append(".%s" % k)
-        return ''.join(js_key_parts) 
+    def emit(self, s):
+        self.lst.append(s)
 
 class MockDatum:
     def __init__(self, json_path, delta_feed):

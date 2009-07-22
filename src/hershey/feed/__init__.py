@@ -104,11 +104,15 @@ class DeltaGenerator:
 class JavascriptSysoutConsumer:
     def __init__(self):
         pass
+
+    def emit(self, s):
+        print s
+
     def feed(self, tag, json_path, dict):
         if tag in ['insert', 'replace']:
-            print self.insert_javascript(json_path, dict)
+            self.emit(self.insert_javascript(json_path, dict))
         elif tag=='delete':
-            print self.delete_javascript(json_path, dict)
+            self.emit(self.delete_javascript(json_path, dict))
         else:
             raise NotImplementedError
 
