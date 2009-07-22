@@ -133,3 +133,71 @@ class JavascriptSysoutConsumer:
                 js_key_parts.append(".%s" % k)
         return ''.join(js_key_parts) 
 
+# ----------
+
+class RelayDatum(object):
+    def __init__(self, db, game_code):
+        self.db = db
+        self.game_code = game_code
+
+        self.rows = None
+        self.extra_args = None
+
+    def sql(self):
+        raise NotImplemented()
+
+    def ensure_rows(self):
+        if not self.rows:
+            self.rows=[self.postprocess(row) for row in self.fetch()]
+
+    def as_delta_generator_input(self):
+        self.ensure_rows()
+        return list_of_dict_to_list_of_pairs(self.rows) 
+
+    def __parse_json_path(self, json_path):
+        path=json_path.split(':')
+        is_key=lambda s: s.startswith('**')
+        index_of_key=None
+        try:
+            index_of_key=map(is_key, path).index(1)
+        except ValueError:
+            pass
+        return path, index_of_key, path[:index_of_key], path[index_of_key+1:]
+
+    def as_bootstrap_dict(self):
+        self.ensure_rows()
+        path, index_of_key, path_before_key, path_after_key = self.__parse_json_path(self.json_path())
+
+        if index_of_key:
+            key=path[index_of_key][2:]
+            result = {}
+            for row in self.rows:
+                path_after_key=path[index_of_key+1:]
+                if path_after_key:
+                    result[row[key]]=hierachy_dict(path_after_key, row)
+                    del row[key]
+                else:
+                    result[row[key]]=row
+                    
+            return hierachy_dict(path_before_key, result)
+        else:
+            return hierachy_dict(path, self.rows)
+
+    def postprocess(self, row):
+        if type(row) == types.DictType:
+            return lowercase_dict_key(row)
+        else:
+            return row
+
+class RelayDatumAsList(RelayDatum):
+    def as_bootstrap_dict(self):
+        self.ensure_rows()
+        path=self.json_path().split(':')
+        return hierachy_dict(path, self.rows)
+
+class RelayDatumAsAtom(RelayDatum):
+    def as_bootstrap_dict(self):
+        self.ensure_rows()
+        path=self.json_path().split(':')
+        return hierachy_dict(path, self.rows[0])
+

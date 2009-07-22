@@ -5,76 +5,7 @@ import re, time, types, datetime
 import feed
 hierachy_dict=feed.hierachy_dict
 
-
-class RelayDatum:
-    def __init__(self, db, game_code):
-        self.db = db
-        self.game_code = game_code
-
-        self.rows = None
-        self.extra_args = None
-
-    def sql(self):
-        raise NotImplemented()
-
-    def ensure_rows(self):
-        if not self.rows:
-            self.rows=[self.postprocess(row) for row in self.fetch()]
-
-    def as_delta_generator_input(self):
-        self.ensure_rows()
-        return feed.list_of_dict_to_list_of_pairs(self.rows) 
-
-    def __parse_json_path(self, json_path):
-        path=json_path.split(':')
-        is_key=lambda s: s.startswith('**')
-        index_of_key=None
-        try:
-            index_of_key=map(is_key, path).index(1)
-        except ValueError:
-            pass
-        return path, index_of_key, path[:index_of_key], path[index_of_key+1:]
-
-    def as_bootstrap_dict(self):
-        self.ensure_rows()
-        path, index_of_key, path_before_key, path_after_key = self.__parse_json_path(self.json_path())
-
-        if index_of_key:
-            key=path[index_of_key][2:]
-            result = {}
-            for row in self.rows:
-                path_after_key=path[index_of_key+1:]
-                if path_after_key:
-                    result[row[key]]=hierachy_dict(path_after_key, row)
-                    del row[key]
-                else:
-                    result[row[key]]=row
-                    
-            return hierachy_dict(path_before_key, result)
-        else:
-            return hierachy_dict(path, self.rows)
-
-    def postprocess(self, row):
-        if type(row) == types.DictType:
-            return feed.lowercase_dict_key(row)
-        else:
-            return row
-
-class RelayDatumAsList(RelayDatum):
-    def as_bootstrap_dict(self):
-        self.ensure_rows()
-        path=self.json_path().split(':')
-        return hierachy_dict(path, self.rows)
-
-class RelayDatumAsAtom(RelayDatum):
-    def as_bootstrap_dict(self):
-        self.ensure_rows()
-        path=self.json_path().split(':')
-        return hierachy_dict(path, self.rows[0])
-
-# ----------
-
-class LiveText(RelayDatumAsList):
+class LiveText(feed.RelayDatumAsList):
     def json_path(self):
         return u"livetext"
 
@@ -95,7 +26,7 @@ class LiveText(RelayDatumAsList):
                 seqNo 
         """ % (self.game_code))
 
-class Meta(RelayDatumAsAtom):
+class Meta(feed.RelayDatumAsAtom):
     def json_path(self):
         return "meta"
 
@@ -106,7 +37,7 @@ class Meta(RelayDatumAsAtom):
             'highlight_clips': False,
         }]
 
-class GameCode(RelayDatumAsAtom):
+class GameCode(feed.RelayDatumAsAtom):
     def json_path(self):
         return "game_code"
 
@@ -117,7 +48,7 @@ class GameCode(RelayDatumAsAtom):
         self.ensure_rows()
         return tuple(self.rows)
 
-class RegistryPlayerProfile(RelayDatum):
+class RegistryPlayerProfile(feed.RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:profile"
 
@@ -137,7 +68,7 @@ class RegistryPlayerProfile(RelayDatum):
         rows=batter_rows+pitcher_rows    
         return rows
 
-class RegistryPlayerBatterSeason(RelayDatum):
+class RegistryPlayerBatterSeason(feed.RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:batter:season"
 
@@ -151,7 +82,7 @@ class RegistryPlayerBatterSeason(RelayDatum):
                 """ % self.game_code)
         return rows
 
-class RegistryPlayerBatterToday(RelayDatum):
+class RegistryPlayerBatterToday(feed.RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:batter:today"
 
@@ -170,7 +101,7 @@ class RegistryPlayerBatterToday(RelayDatum):
                 """ % self.game_code)
         return rows
 
-class RegistryPlayerPitcherToday(RelayDatum):
+class RegistryPlayerPitcherToday(feed.RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:pitcher:today"
 
@@ -190,7 +121,7 @@ class RegistryPlayerPitcherToday(RelayDatum):
                 """ % self.game_code)
         return rows
 
-class RegistryPlayerPitcherSeason(RelayDatum):
+class RegistryPlayerPitcherSeason(feed.RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:pitcher:season"
 
@@ -211,7 +142,7 @@ class RegistryPlayerPitcherSeason(RelayDatum):
                 """ % self.game_code)
         return rows
 
-class RegistryTeamSeason(RelayDatum):
+class RegistryTeamSeason(feed.RelayDatum):
     def json_path(self):
         return u"registry:team:**tcode:season"
 
@@ -224,7 +155,7 @@ class RegistryTeamSeason(RelayDatum):
                 """ % (self.game_code))
         return rows
 
-class RegistryTeamProfile(RelayDatum):
+class RegistryTeamProfile(feed.RelayDatum):
     def json_path(self):
         return u"registry:team:**tcode:profile"
 
@@ -239,9 +170,9 @@ class RegistryTeamProfile(RelayDatum):
                 """)
         return rows
 
-class LeagueTodayGames(RelayDatumAsList):
+class LeagueTodayGames(feed.RelayDatumAsList):
     def __init__(self, db, game_code, game_datetime=datetime.datetime.now()):
-        RelayDatumAsList.__init__(self, db, game_code)
+        super(LeagueTodayGames, self).__init__(db, game_code)
         self.game_datetime = game_datetime
 
     def json_path(self):
@@ -259,9 +190,9 @@ class LeagueTodayGames(RelayDatumAsList):
         self.ensure_rows()
         return tuple(self.rows)
 
-class LeaguePastVsGames(RelayDatumAsList):
+class LeaguePastVsGames(feed.RelayDatumAsList):
     def __init__(self, db, game_code):
-        RelayDatumAsList.__init__(self, db, game_code)
+        super(LeaguePastVsGames, self).__init__(db, game_code)
 
     def json_path(self):
         return u"league:past_vs_games"
@@ -287,7 +218,7 @@ class LeaguePastVsGames(RelayDatumAsList):
         self.ensure_rows()
         return tuple(self.rows)
 
-class ScoreBoard(RelayDatum):
+class ScoreBoard(feed.RelayDatum):
     def json_path(self):
         return u"registry:scoreboard:**game_code"
 
@@ -340,7 +271,7 @@ class ScoreBoard(RelayDatum):
         return [row1]
 
     def postprocess(self, row):
-        row=RelayDatum.postprocess(self, row)
+        row=super(ScoreBoard, self).postprocess(row)
         row['game_datetime']="%s-%s-%sT%sZ" % (row['gyear'], row['gmonth'], row['gday'], 
                                                re.search('\d+:\d+', row['gtime']).group(0))
         for name_to_remove in ['gyear', 'gmonth', 'gday', 'gtime']:
@@ -379,21 +310,21 @@ class ScoreBoardHomeOrAwayMixIn:
         return [row]
 
 
-class ScoreBoardHome(RelayDatum, ScoreBoardHomeOrAwayMixIn):
+class ScoreBoardHome(feed.RelayDatum, ScoreBoardHomeOrAwayMixIn):
     def json_path(self):
         return u"registry:scoreboard:**game_code:home"
 
     def fetch(self):
         return ScoreBoardHomeOrAwayMixIn.fetch(self, 1)
 
-class ScoreBoardAway(RelayDatum, ScoreBoardHomeOrAwayMixIn):
+class ScoreBoardAway(feed.RelayDatum, ScoreBoardHomeOrAwayMixIn):
     def json_path(self):
         return u"registry:scoreboard:**game_code:away"
 
     def fetch(self):
         return ScoreBoardHomeOrAwayMixIn.fetch(self, 0)
 
-class ScoreBoardBases(RelayDatum):
+class ScoreBoardBases(feed.RelayDatum):
     def json_path(self):
         return u"registry:scoreboard:**game_code:bases"
 
@@ -423,7 +354,7 @@ class ScoreBoardBases(RelayDatum):
             row[k]=self.find_pcode_of_batorder(row[k], current_batter_list)
         return rows
 
-class ScoreBoardWatingBatters(RelayDatumAsList):
+class ScoreBoardWatingBatters(feed.RelayDatumAsList):
     def json_path(self):
         return u"registry:scoreboard:%s:waiting_batters" % self.game_code
 

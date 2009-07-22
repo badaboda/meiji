@@ -1,5 +1,6 @@
 # vim: fileencoding=utf-8 :
 import unittest
+import MySQLdb
 import types
 import datetime
 from pprint import pprint as p
