@@ -3,66 +3,7 @@
 import re, time, types, datetime
 
 import feed
-
-#import router_client
-import mock_router_client as router_client
-
 hierachy_dict=feed.hierachy_dict
-
-def current_btop(db, game_code):
-    # 9회초(btop=1) 에서 9회말로 넘어가는 순간
-    #   홈팀이 이기고 있다면 
-    #   9회말에 홈팀이 공격을 하지 않고 경기가 끝나고 
-    # IE_LiveText에 inning=99,bTop=0로 '경기 종료'라는 메세지가 insert된다. 
-    
-    # IE_BallCount에는 9회초에 away의 타자pcode가 batter field에 들어가 업데이트가 중지되기에 
-    #   경기가 끝난 이후에 batorder를 잘 얻어오려면 
-    #   inning=99를 제외하 btop 값을 select해야 한다.
-    rows = db.execute("""
-        SELECT btop
-        FROM IE_LiveText
-        WHERE gameID = '%s' 
-            AND inning <> 99
-        ORDER BY seqNo desc
-        LIMIT 1
-    """ % game_code)
-    assert len(rows) == 1
-    return rows[0]['btop']
-
-def fetch_current_batter_list(db, game_code):
-    btop=current_btop(db, game_code)
-    assert btop in [0, 1], "btop |%d|" % btop
-    bhome=((btop==0) and 1) or 0
-
-    lineup_sql="""
-        SELECT br.bhome as home, 
-               br.playerID as pcode,
-               br.BatOrder as batorder,
-               br.position as position_code
-        FROM IE_BatterRecord br
-        INNER JOIN 
-            Kbo_Person p
-            ON (br.PlayerID = p.PCODE)
-        LEFT OUTER JOIN
-            Kbo_BatTotal bt
-            ON (br.PlayerID = bt.PCODE)
-        WHERE 
-            br.gameid = '%s'
-            AND br.bhome = %d
-        ORDER BY br.BatOrder ASC, br.SeqNo DESC
-    """
-    candidates=db.execute(lineup_sql % (game_code, bhome))
-
-    old_batorder = None
-    for c in candidates:
-        c['is_in_batter_list'] = (old_batorder != c['batorder'])
-        old_batorder=c['batorder']
-
-    current_batter_list = [c for c in candidates if c['is_in_batter_list']]
-
-    for b in current_batter_list:
-        del b['is_in_batter_list']
-    return current_batter_list
 
 
 class RelayDatum:
@@ -130,6 +71,8 @@ class RelayDatumAsAtom(RelayDatum):
         self.ensure_rows()
         path=self.json_path().split(':')
         return hierachy_dict(path, self.rows[0])
+
+# ----------
 
 class LiveText(RelayDatumAsList):
     def json_path(self):
@@ -405,7 +348,6 @@ class ScoreBoard(RelayDatum):
         row['double_header'] = bool(row['double_header'])
         return row
 
-
 class ScoreBoardHomeOrAwayMixIn:
     def fetch(self, bhome):
         row=self.db.execute("""
@@ -512,6 +454,64 @@ class ScoreBoardWatingBatters(RelayDatumAsList):
         else:
             raise ValueError('pcode not found in current_batter_list: %s' % pcode)
 
+# ----------
+
+def current_btop(db, game_code):
+    # 9회초(btop=1) 에서 9회말로 넘어가는 순간
+    #   홈팀이 이기고 있다면 
+    #   9회말에 홈팀이 공격을 하지 않고 경기가 끝나고 
+    # IE_LiveText에 inning=99,bTop=0로 '경기 종료'라는 메세지가 insert된다. 
+    
+    # IE_BallCount에는 9회초에 away의 타자pcode가 batter field에 들어가 업데이트가 중지되기에 
+    #   경기가 끝난 이후에 batorder를 잘 얻어오려면 
+    #   inning=99를 제외하 btop 값을 select해야 한다.
+    rows = db.execute("""
+        SELECT btop
+        FROM IE_LiveText
+        WHERE gameID = '%s' 
+            AND inning <> 99
+        ORDER BY seqNo desc
+        LIMIT 1
+    """ % game_code)
+    assert len(rows) == 1
+    return rows[0]['btop']
+
+def fetch_current_batter_list(db, game_code):
+    btop=current_btop(db, game_code)
+    assert btop in [0, 1], "btop |%d|" % btop
+    bhome=((btop==0) and 1) or 0
+
+    lineup_sql="""
+        SELECT br.bhome as home, 
+               br.playerID as pcode,
+               br.BatOrder as batorder,
+               br.position as position_code
+        FROM IE_BatterRecord br
+        INNER JOIN 
+            Kbo_Person p
+            ON (br.PlayerID = p.PCODE)
+        LEFT OUTER JOIN
+            Kbo_BatTotal bt
+            ON (br.PlayerID = bt.PCODE)
+        WHERE 
+            br.gameid = '%s'
+            AND br.bhome = %d
+        ORDER BY br.BatOrder ASC, br.SeqNo DESC
+    """
+    candidates=db.execute(lineup_sql % (game_code, bhome))
+
+    old_batorder = None
+    for c in candidates:
+        c['is_in_batter_list'] = (old_batorder != c['batorder'])
+        old_batorder=c['batorder']
+
+    current_batter_list = [c for c in candidates if c['is_in_batter_list']]
+
+    for b in current_batter_list:
+        del b['is_in_batter_list']
+    return current_batter_list
+
+# ----------
 
 datums = [RegistryPlayerProfile,
             RegistryPlayerBatterSeason,
