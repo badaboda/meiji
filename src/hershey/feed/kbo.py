@@ -78,7 +78,7 @@ class RelayDatum:
 
     def ensure_rows(self):
         if not self.rows:
-            self.rows=self.fetch(self.game_code)
+            self.rows=self.fetch()
 
     def as_delta_generator_input(self):
         self.ensure_rows()
@@ -132,7 +132,7 @@ class LiveText(RelayDatumAsList):
     def json_path(self):
         return u"livetext"
 
-    def fetch(self, game_code):
+    def fetch(self):
         return self.db.execute("""
             SELECT 
                 kbo.IE_LiveText.gameID    AS game_code, 
@@ -153,7 +153,7 @@ class Meta(RelayDatumAsAtom):
     def json_path(self):
         return "meta"
 
-    def fetch(self, game_code):
+    def fetch(self):
         return [{
             'live_feed_type_text': True,
             'live_feed_type_video': False,
@@ -164,8 +164,8 @@ class GameCode(RelayDatumAsAtom):
     def json_path(self):
         return "game_code"
 
-    def fetch(self, game_code):
-        return [game_code]
+    def fetch(self):
+        return [self.game_code]
 
     def as_delta_generator_input(self):
         self.ensure_rows()
@@ -175,19 +175,19 @@ class RegistryPlayerProfile(RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:profile"
 
-    def fetch(self, game_code):
+    def fetch(self):
         batter_rows=self.db.execute("""
                     SELECT p.*
                     FROM IE_BatterRecord br, Kbo_Person p
                     WHERE br.PlayerID = p.PCODE
                         and br.gameID = '%s' 
-                """ % game_code)
+                """ % self.game_code)
         pitcher_rows=self.db.execute("""
                     SELECT p.*
                     FROM IE_PitcherRecord pr, Kbo_Person p
                     WHERE pr.PlayerID = p.PCODE
                         and pr.gameID = '%s' 
-                """ % game_code)
+                """ % self.game_code)
         rows=batter_rows+pitcher_rows    
         return [self.postprocess(row) for row in rows]
 
@@ -195,21 +195,21 @@ class RegistryPlayerBatterSeason(RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:batter:season"
 
-    def fetch(self, game_code):
+    def fetch(self):
         rows=self.db.execute("""
                     SELECT b.*
                     FROM IE_BatterRecord br, Kbo_BatTotal b
                     WHERE br.PlayerID = b.PCODE
                         AND substring(br.gameID,1,4) = b.GYEAR
                         AND br.gameID = '%s' 
-                """ % game_code)
+                """ % self.game_code)
         return [self.postprocess(row) for row in rows]
 
 class RegistryPlayerBatterToday(RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:batter:today"
 
-    def fetch(self, game_code):
+    def fetch(self):
         rows=self.db.execute("""
                     SELECT br.playerId as pcode, 
                             br.OAB        AS ab, 
@@ -221,14 +221,14 @@ class RegistryPlayerBatterToday(RelayDatum):
                             br.Run     AS r
                     FROM IE_BatterRecord br
                     WHERE br.gameID = '%s' 
-                """ % game_code)
+                """ % self.game_code)
         return [self.postprocess(row) for row in rows]
 
 class RegistryPlayerPitcherToday(RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:pitcher:today"
 
-    def fetch(self, game_code):
+    def fetch(self):
         rows=self.db.execute("""
                     SELECT  pr.PlayerID       AS pcode, 
                             pr.Inning         AS ip, 
@@ -241,14 +241,14 @@ class RegistryPlayerPitcherToday(RelayDatum):
                             (pr.PitchBallCnt + pr.PitchStrikeCnt) AS np
                     FROM IE_PitcherRecord pr
                     WHERE pr.gameID = '%s' 
-                """ % game_code)
+                """ % self.game_code)
         return [self.postprocess(row) for row in rows]
 
 class RegistryPlayerPitcherSeason(RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:pitcher:season"
 
-    def fetch(self, game_code):
+    def fetch(self):
         rows=self.db.execute("""
                     SELECT  
                         pt.pcode as pcode,
@@ -262,14 +262,14 @@ class RegistryPlayerPitcherSeason(RelayDatum):
                     WHERE pr.gameID = '%s' 
                         AND pt.PCODE = pr.PlayerID
                         AND substring(pr.gameID,1,4) = pt.GYEAR
-                """ % game_code)
+                """ % self.game_code)
         return [self.postprocess(row) for row in rows]
 
 class RegistryTeamSeason(RelayDatum):
     def json_path(self):
         return u"registry:team:**tcode:season"
 
-    def fetch(self, game_code):
+    def fetch(self):
         rows=self.db.execute("""
                     select (select home_key from Kbo_Schedule where home = tr.team order by GYEAR limit 1) as tcode,
                             tr.*
@@ -282,7 +282,7 @@ class RegistryTeamProfile(RelayDatum):
     def json_path(self):
         return u"registry:team:**tcode:profile"
 
-    def fetch(self, game_code):
+    def fetch(self):
         rows=self.db.execute("""
                     SELECT team_id as tcode, 
                            teamname1,
@@ -301,7 +301,7 @@ class LeagueTodayGames(RelayDatumAsList):
     def json_path(self):
         return u"league:today_games"
 
-    def fetch(self, game_code):
+    def fetch(self):
         rows=self.db.execute("""
                     SELECT gmkey as game_code
                     FROM Kbo_Schedule
@@ -320,7 +320,7 @@ class LeaguePastVsGames(RelayDatumAsList):
     def json_path(self):
         return u"league:past_vs_games"
 
-    def fetch(self, game_code):
+    def fetch(self):
         rows=self.db.execute("""
                 SELECT 
                     a.gmkey as game_code
@@ -345,7 +345,7 @@ class ScoreBoard(RelayDatum):
     def json_path(self):
         return u"registry:scoreboard:**game_code"
 
-    def fetch(self, game_code):
+    def fetch(self):
         rows=self.db.execute("""
             SELECT gmkey as game_code,
                    gyear as season_year,
@@ -404,7 +404,7 @@ class ScoreBoard(RelayDatum):
 
 
 class ScoreBoardHomeOrAwayMixIn:
-    def fetch(self, game_code, bhome):
+    def fetch(self, bhome):
         row=self.db.execute("""
                 SELECT 
                     rheb.gameID as game_code,
@@ -438,15 +438,15 @@ class ScoreBoardHome(RelayDatum, ScoreBoardHomeOrAwayMixIn):
     def json_path(self):
         return u"registry:scoreboard:**game_code:home"
 
-    def fetch(self, game_code):
-        return ScoreBoardHomeOrAwayMixIn.fetch(self, game_code, 1)
+    def fetch(self):
+        return ScoreBoardHomeOrAwayMixIn.fetch(self, 1)
 
 class ScoreBoardAway(RelayDatum, ScoreBoardHomeOrAwayMixIn):
     def json_path(self):
         return u"registry:scoreboard:**game_code:away"
 
-    def fetch(self, game_code):
-        return ScoreBoardHomeOrAwayMixIn.fetch(self, game_code, 0)
+    def fetch(self):
+        return ScoreBoardHomeOrAwayMixIn.fetch(self, 0)
 
 class ScoreBoardBases(RelayDatum):
     def json_path(self):
@@ -461,7 +461,7 @@ class ScoreBoardBases(RelayDatum):
         else:
             raise ValueError('batorder not found: %d' % batorder)
 
-    def fetch(self, game_code):
+    def fetch(self):
         rows=self.db.execute("""
                 SELECT gameID as game_code, 
                     base1, 
@@ -482,7 +482,7 @@ class ScoreBoardWatingBatters(RelayDatumAsList):
     def json_path(self):
         return u"registry:scoreboard:%s:waiting_batters" % self.game_code
 
-    def fetch(self, game_code):
+    def fetch(self):
         current_batter_list=fetch_current_batter_list(self.db, self.game_code)
         batorder=self.current_batorder(current_batter_list)
 
