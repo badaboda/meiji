@@ -6,6 +6,7 @@ import datetime
 from pprint import pprint as p
 
 import feed
+from feed import kbo
 import mock
 import merge
 
@@ -43,19 +44,19 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
 
     def testRegistryPlayerProfile(self):
         self.assertHierachy('registry:player:96441:profile', 
-                             self.new_datum(feed.RegistryPlayerProfile).as_bootstrap_dict())
+                             self.new_datum(kbo.RegistryPlayerProfile).as_bootstrap_dict())
         
     def testRegistryPlayerSeason(self):
         self.assertHierachy('registry:player:72139:batter:season', 
-                            self.new_datum(feed.RegistryPlayerBatterSeason).as_bootstrap_dict())
+                            self.new_datum(kbo.RegistryPlayerBatterSeason).as_bootstrap_dict())
 
     def testScoreBoardForCurrentGame(self):
         code=self.game_code
-        specs = [(feed.ScoreBoard, code),
-                   (feed.ScoreBoardHome, code), 
-                   (feed.ScoreBoardAway, code),
-                   (feed.ScoreBoardBases, code), 
-                   (feed.ScoreBoardWatingBatters, code),]
+        specs = [(kbo.ScoreBoard, code),
+                   (kbo.ScoreBoardHome, code), 
+                   (kbo.ScoreBoardAway, code),
+                   (kbo.ScoreBoardBases, code), 
+                   (kbo.ScoreBoardWatingBatters, code),]
         initial_dicts=[self.new_scoreboard_datum(klass, game_code).as_bootstrap_dict() for klass, game_code in specs]
         merged=self.merge(initial_dicts)
         #p(merged)
@@ -64,27 +65,27 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
         self.assertHierachy("registry:scoreboard:%s:waiting_batters" % code, merged)
 
     def testScoreboardForLeague(self):
-        today_games=feed.LeagueTodayGames(self.db, self.game_code, datetime.datetime(2009, 07, 11))
+        today_games=kbo.LeagueTodayGames(self.db, self.game_code, datetime.datetime(2009, 07, 11))
         today_games.ensure_rows()
-        past_vs_games=feed.LeaguePastVsGames(self.db, self.game_code)
+        past_vs_games=kbo.LeaguePastVsGames(self.db, self.game_code)
         past_vs_games.ensure_rows()
         game_codes=today_games.rows+past_vs_games.rows
         
         initial_dicts=[]
         for game_code in game_codes:
-            specs = [(feed.ScoreBoard, game_code),
-                       (feed.ScoreBoardHome, game_code), 
-                       (feed.ScoreBoardAway, game_code),
-                       (feed.ScoreBoardBases, game_code), 
-                       (feed.ScoreBoardWatingBatters, game_code),]
+            specs = [(kbo.ScoreBoard, game_code),
+                       (kbo.ScoreBoardHome, game_code), 
+                       (kbo.ScoreBoardAway, game_code),
+                       (kbo.ScoreBoardBases, game_code), 
+                       (kbo.ScoreBoardWatingBatters, game_code),]
             initial_dicts+=[self.new_scoreboard_datum(klass, game_code).as_bootstrap_dict() for klass, game_code in specs]
         merged=self.merge(initial_dicts)
         #p(merged)
 
     def testLeague(self):
         initial_dicts=[
-            feed.LeagueTodayGames(self.db, self.game_code, datetime.datetime(2009, 07, 11)).as_bootstrap_dict(), 
-            feed.LeaguePastVsGames(self.db, self.game_code).as_bootstrap_dict()
+            kbo.LeagueTodayGames(self.db, self.game_code, datetime.datetime(2009, 07, 11)).as_bootstrap_dict(), 
+            kbo.LeaguePastVsGames(self.db, self.game_code).as_bootstrap_dict()
         ]
         merged=self.merge(initial_dicts)
         #p(merged)
@@ -93,18 +94,18 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
         self.assertEquals(3, len(merged['league']['today_games']))
 
     def testRegistryPlayer(self):
-        klasses = [feed.RegistryPlayerProfile,
-                    feed.RegistryPlayerBatterSeason,
-                    feed.RegistryPlayerBatterToday,
-                    feed.RegistryPlayerPitcherToday, 
-                    feed.RegistryPlayerPitcherSeason, 
-                    feed.RegistryTeamSeason, 
-                    feed.RegistryTeamProfile, ]
+        klasses = [kbo.RegistryPlayerProfile,
+                    kbo.RegistryPlayerBatterSeason,
+                    kbo.RegistryPlayerBatterToday,
+                    kbo.RegistryPlayerPitcherToday, 
+                    kbo.RegistryPlayerPitcherSeason, 
+                    kbo.RegistryTeamSeason, 
+                    kbo.RegistryTeamProfile, ]
         initial_dicts=[self.new_datum(klass).as_bootstrap_dict() for klass in klasses]
         #p(self.merge(initial_dicts))
 
     def testLiveTextAndMeta(self):
-        klasses = [feed.Meta, feed.GameCode]
+        klasses = [kbo.Meta, kbo.GameCode]
         initial_dicts=[self.new_datum(klass).as_bootstrap_dict() for klass in klasses]
         #p(self.merge(initial_dicts))
         
@@ -156,10 +157,10 @@ class FeedAsDeltaGeneratorInput(unittest.TestCase):
         self.delta=feed.DeltaGenerator(self.consumer)
 
     def testRegistryPlayerProfile(self):
-        d=feed.RegistryPlayerProfile(self.db, self.game_code)
+        d=kbo.RegistryPlayerProfile(self.db, self.game_code)
         self.delta.feed(d)
 
-        d=feed.RegistryPlayerProfile(self.db, self.game_code)
+        d=kbo.RegistryPlayerProfile(self.db, self.game_code)
         d.ensure_rows()
         d.rows[0]['name']='xxx'
         self.delta.feed(d)
@@ -167,17 +168,17 @@ class FeedAsDeltaGeneratorInput(unittest.TestCase):
         self.assert_(len(self.consumer.lst) > 0)
 
     def testAnotherKindFeedShouldNotGenerateDelta(self):
-        d=feed.RegistryPlayerProfile(self.db, self.game_code)
+        d=kbo.RegistryPlayerProfile(self.db, self.game_code)
         self.delta.feed(d)
 
-        d=feed.RegistryPlayerBatterSeason(self.db, self.game_code)
+        d=kbo.RegistryPlayerBatterSeason(self.db, self.game_code)
         d.ensure_rows()
         self.delta.feed(d)
         
         self.assertEquals(0, len(self.consumer.lst))
 
     def testAllDatumCouldCallAsDeltaGeneratorInput(self):
-        for klass in feed.datums+feed.league_datums+feed.scoreboard_datums:
+        for klass in kbo.datums+kbo.league_datums+kbo.scoreboard_datums:
             try:
                 klass(self.db, self.game_code).as_delta_generator_input()
             except ValueError:

@@ -1,7 +1,9 @@
 import MySQLdb
 import sys, pprint, time
 
-import feed, merge
+import merge
+import feed
+from feed import kbo
 
 
 def loop(delta, game_code):
@@ -11,18 +13,18 @@ def loop(delta, game_code):
                         cursorclass=MySQLdb.cursors.DictCursor)
     consumer = feed.JavascriptSysoutConsumer()
 
-    for klass in feed.datums:
+    for klass in kbo.datums:
         datum=klass(db, game_code)
         delta.feed(datum)
 
-    league_datums = [ feed.LeagueTodayGames(db, game_code), 
-                      feed.LeaguePastVsGames(db, game_code) ]
+    league_datums = [ kbo.LeagueTodayGames(db, game_code), 
+                      kbo.LeaguePastVsGames(db, game_code) ]
     game_codes = [game_code]
-    for klass in feed.league_datums:
+    for klass in kbo.league_datums:
         delta.feed(klass(db, game_code))
         game_codes += datum.rows
 
-    for klass in feed.scoreboard_datums:
+    for klass in kbo.scoreboard_datums:
         for c in game_codes:
             delta.feed(klass(db, c))
 
