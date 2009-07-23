@@ -5,10 +5,6 @@ import MySQLdb.cursors
 import types, exceptions, sys
 from difflib import SequenceMatcher
 
-def write(o):
-    sys.stdout.write(str(o))
-    #sys.stdout.write("\n")
-
 def _dict_to_tuple_recursive(dict):
     result=[]
     if type(dict) != types.DictType:
@@ -215,6 +211,12 @@ class RelayDatumAsAtom(RelayDatum):
         self.ensure_rows()
         path=self.json_path().split(':')
         return hierachy_dict(path, self.rows[0])
+
+# ----------
+
+def write(o):
+    sys.stdout.write(str(o))
+    #sys.stdout.write("\n")
 
 def mypprint(o, write=write):
     if type(o)==type({}):
