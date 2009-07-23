@@ -18,11 +18,10 @@ if __name__=='__main__':
         datum=klass(db, game_code)
         bootstrap_dicts.append(datum.as_bootstrap_dict())
 
-    league_datums = [ kbo.LeagueTodayGames(db, game_code), 
+    league_datums = [ kbo.LeagueTodayGames(db, game_code, feed.gamecode_to_datetime(game_code)), 
                       kbo.LeaguePastVsGames(db, game_code) ]
     game_codes = [game_code]
-    for klass in kbo.league_datums:
-        datum=klass(db, game_code)
+    for datum in league_datums:
         bootstrap_dicts.append(datum.as_bootstrap_dict())
         game_codes += datum.rows
 

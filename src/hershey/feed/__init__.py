@@ -2,7 +2,7 @@
 import MySQLdb
 import MySQLdb.cursors
 
-import types, exceptions, sys
+import types, exceptions, sys, datetime
 from difflib import SequenceMatcher
 
 def _dict_to_tuple_recursive(dict):
@@ -29,6 +29,9 @@ def hierachy_dict(hierachy_parent_names, leaf):
         r=r[n]
     r[hierachy_parent_names[-1]]=leaf
     return orig
+
+def gamecode_to_datetime(gamecode):
+    return datetime.datetime(int(gamecode[:4]), int(gamecode[4:6]), int(gamecode[6:8]))
 
 class Error(exceptions.Exception):
     pass
