@@ -111,6 +111,13 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
         #p(self.merge(initial_dicts))
         
+    def testScoreboardForNoDataInScheduleTable(self):
+        self.assertRaises(feed.NoDataFoundForScoreboardError,
+                            self.bootstrap_dict, kbo.ScoreBoard, 'not_exist_gamecode')
+
+    def testScoreboardForNoDataInScheduleTable(self):
+        # game_code를 Schedule테이블에는 있되 IE_LiveText 테이블에는 없는 것으로 설정
+        self.bootstrap_dict(kbo.ScoreBoard, '20090730HTLT0')
 
 class DeltaGeneratorTest(unittest.TestCase):
     def setUp(self):

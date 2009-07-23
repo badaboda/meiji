@@ -222,7 +222,7 @@ class ScoreBoard(feed.RelayDatum):
     def json_path(self):
         return u"registry:scoreboard:**game_code"
 
-    def fetch(self):
+    def fetch_kbo_schedule(self):
         rows=self.db.execute("""
             SELECT gmkey as game_code,
                    gyear as season_year,
@@ -239,10 +239,12 @@ class ScoreBoard(feed.RelayDatum):
             FROM Kbo_Schedule 
             WHERE gmkey = '%s'
         """ % (self.game_code))
-        assert len(rows) == 1
-        row1 = rows[0]
-        
-        row2=self.db.execute("""
+        if len(rows) == 0:
+            raise feed.NoDataFoundForScoreboardError()
+        return rows[0]
+
+    def fetch_ie_livetext(self):
+        rows=self.db.execute("""
             SELECT 
                 kbo.IE_LiveText.inning AS inning, 
                 kbo.IE_LiveText.bTop  AS bhome,
@@ -255,9 +257,13 @@ class ScoreBoard(feed.RelayDatum):
                 inning DESC, 
                 bhome 
             LIMIT 1
-        """ % self.game_code)[0]
+        """ % self.game_code)
+        if len(rows) == 0:
+            raise feed.NoDataFoundForScoreboardError()
+        return rows[0]
 
-        row3=self.db.execute("""
+    def fetch_ballcount(self):
+        rows=self.db.execute("""
             SELECT strike as strike,
                     ball as ball,
                     `out` as `out`,
@@ -265,8 +271,23 @@ class ScoreBoard(feed.RelayDatum):
                     batter as batter_pcode
             FROM IE_BallCount
             WHERE gameID = '%s' 
-        """ % self.game_code)[0]
-        row1.update(row3)
+        """ % self.game_code)
+        if len(rows) == 0:
+            raise feed.NoDataFoundForScoreboardError()
+        return rows[0]
+
+    def fetch(self):
+        row1=self.fetch_kbo_schedule()
+        try:
+            row2=self.fetch_ie_livetext()
+            row3=self.fetch_ballcount()
+            row1.update(row2)
+            row1.update(row3)
+        except feed.NoDataFoundForScoreboardError:
+            # 아직 시작하지 않은 경기라면 
+            # Schedule 테이블에는 game_code가 있는데 
+            # LiveText 테이블에는 데이터가 없을 수 있다 
+            pass
 
         return [row1]
 
