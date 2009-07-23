@@ -242,7 +242,7 @@ def mypprint(o, write=write):
             write(',',)
         write(']')
     elif type(o)==type(u''):
-        write('"%s"' % o.encode('unicode_escape'))
+        write('"%s"' % o.encode('utf-8'))
     elif type(o)==type(''):
         write('"%s"' % o)
     elif type(o) in [type(0), type(0L), type(0.3)]:

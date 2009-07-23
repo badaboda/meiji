@@ -12,7 +12,6 @@ class LiveText(feed.RelayDatumAsList):
     def fetch(self):
         return self.db.execute("""
             SELECT 
-                kbo.IE_LiveText.gameID    AS game_code, 
                 kbo.IE_LiveText.SeqNO     AS seq, 
                 kbo.IE_LiveText.Inning    AS inning, 
                 kbo.IE_LiveText.bTop      AS btop, 
@@ -53,18 +52,28 @@ class RegistryPlayerProfile(feed.RelayDatum):
         return u"registry:player:**pcode:profile"
 
     def fetch(self):
+        sql_colums = """
+            p.pcode as pcode,
+            p.name as name,
+            p.backnum as backnum,
+            p.position as position,
+            p.hittype as hittype, 
+            p.weight as weight,
+            p.height as height
+        """
+
         batter_rows=self.db.execute("""
-                    SELECT p.*
+                    SELECT %s
                     FROM IE_BatterRecord br, Kbo_Person p
                     WHERE br.PlayerID = p.PCODE
                         and br.gameID = '%s' 
-                """ % self.game_code)
+                """ % (sql_colums, self.game_code))
         pitcher_rows=self.db.execute("""
-                    SELECT p.*
+                    SELECT %s
                     FROM IE_PitcherRecord pr, Kbo_Person p
                     WHERE pr.PlayerID = p.PCODE
                         and pr.gameID = '%s' 
-                """ % self.game_code)
+                """ % (sql_colums, self.game_code))
         rows=batter_rows+pitcher_rows    
         return rows
 
