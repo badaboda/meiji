@@ -12,15 +12,15 @@ class LiveText(feed.RelayDatumAsList):
     def fetch(self):
         return self.db.execute("""
             SELECT 
-                kbo.IE_LiveText.SeqNO     AS seq, 
-                kbo.IE_LiveText.Inning    AS inning, 
-                kbo.IE_LiveText.bTop      AS btop, 
-                kbo.IE_LiveText.LiveText  AS text, 
-                kbo.IE_LiveText.textStyle AS textstyle 
+                IE_LiveText.SeqNO     AS seq, 
+                IE_LiveText.Inning    AS inning, 
+                IE_LiveText.bTop      AS btop, 
+                IE_LiveText.LiveText  AS text, 
+                IE_LiveText.textStyle AS textstyle 
             FROM 
-                kbo.IE_LiveText 
+                IE_LiveText 
             WHERE 
-                kbo.IE_LiveText.gameID = '%s'
+                IE_LiveText.gameID = '%s'
             ORDER BY 
                 seqNo 
         """ % (self.game_code))
@@ -211,7 +211,7 @@ class LeaguePastVsGames(feed.RelayDatumAsList):
                 SELECT 
                     a.gmkey as game_code
                 FROM 
-                    kbo.Kbo_Schedule a, (select gmkey as game_code, home, visit  from kbo.Kbo_Schedule where gmkey = '%s') b
+                    Kbo_Schedule a, (select gmkey as game_code, home, visit  from Kbo_Schedule where gmkey = '%s') b
                 WHERE 
                   ((a.home = b.home and a.visit = b.visit) OR
                    (a.home = b.visit and a.visit = b.home))
@@ -255,13 +255,13 @@ class ScoreBoard(feed.RelayDatum):
     def fetch_ie_livetext(self):
         rows=self.db.execute("""
             SELECT 
-                kbo.IE_LiveText.inning AS inning, 
-                kbo.IE_LiveText.bTop  AS bhome,
+                IE_LiveText.inning AS inning, 
+                IE_LiveText.bTop  AS bhome,
                 if(( textStyle='99'),'end','ing') as status
             FROM 
-                kbo.IE_LiveText
+                IE_LiveText
             WHERE 
-                kbo.IE_LiveText.gameID = '%s'
+                IE_LiveText.gameID = '%s'
             ORDER BY 
                 inning DESC, 
                 bhome 
