@@ -170,7 +170,7 @@ class ScoreBoard(feed.RelayDatum):
     def json_path(self):
         return u"registry:scoreboard:**game_code"
 
-    def fetch(self):
+    def fetch_schedule(self):
         rows=self.db.execute("""
             SELECT gmkey as game_code,
                    gyear as season_year,
@@ -189,9 +189,10 @@ class ScoreBoard(feed.RelayDatum):
         """ % (self.game_code))
         if len(rows) == 0:
             raise feed.NoDataFoundForScoreboardError("no data for game_code(%s) at table(%s)" % (self.game_code, "SCHEDULE"))
-        row1 = rows[0]
+        return rows[0]
 
-        rows2=self.db.execute("""
+    def fetch_livetext(self):
+        rows=self.db.execute("""
             SELECT
                 LIVETEXT.inning AS inning,
                 LIVETEXT.bTop  AS bhome,
@@ -205,11 +206,12 @@ class ScoreBoard(feed.RelayDatum):
                 bhome
             LIMIT 1
         """ % self.game_code)
-        if len(rows2) == 0:
+        if len(rows) == 0:
             raise feed.NoDataFoundForScoreboardError("no data for game_code(%s) at table(%s)" % (self.game_code, "LIVETEXT"))
-        row2=rows2[0]
+        return rows[0]
 
-        rows3=self.db.execute("""
+    def fetch_ballcount(self):
+        rows=self.db.execute("""
             SELECT strike as strike,
                     ball as ball,
                     `out` as `out`,
@@ -218,10 +220,17 @@ class ScoreBoard(feed.RelayDatum):
             FROM BALLCOUNT
             WHERE gmkey = '%s'
         """ % self.game_code)
-        if len(rows3) == 0:
+        if len(rows) == 0:
             raise feed.NoDataFoundForScoreboardError("no data for game_code(%s) at table(%s)" % (self.game_code, "BALLCOUNT"))
-        row1.update(rows3[0])
+        return rows[0]
 
+    def fetch(self):
+        row1=self.fetch_schedule()
+        row2=self.fetch_livetext()
+        row3=self.fetch_ballcount()
+
+        row1.update(rows2)
+        row1.update(rows3)
         return [row1]
 
     def postprocess(self, row):
