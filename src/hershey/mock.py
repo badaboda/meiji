@@ -18,3 +18,5 @@ class MockDatum:
     def as_delta_generator_input(self):
         return feed.list_of_dict_to_list_of_pairs(self.delta_feed)
 
+class MockDatumAsList(MockDatum, feed.RelayDatumAsList):
+    pass

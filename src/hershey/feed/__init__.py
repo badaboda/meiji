@@ -88,7 +88,7 @@ class DeltaGenerator:
                 if tag == 'equal':
                     pass
                 else:
-                    self.consumer.feed(tag, json_path, dict(list_of_pair))
+                    self.consumer.feed(tag, datum, dict(list_of_pair))
         self.old_input[json_path] = current
 
     def diff_seq_specs(self, old, current):
@@ -120,11 +120,17 @@ class JavascriptSysoutConsumer:
     def emit(self, s):
         print s
 
-    def feed(self, tag, json_path, dict):
-        if tag in ['insert', 'replace']:
-            self.emit(self.insert_javascript(json_path, dict))
+    def feed(self, tag, datum, dict):
+        json_path = datum.json_path()
+        if tag in ['insert']:
+            if isinstance(datum, RelayDatumAsList):
+                self.emit('db.%s.push(%s);' % (json_path, str(dict)))
+            else:
+                self.emit(self.insert_javascript(json_path, dict))
         elif tag=='delete':
             self.emit(self.delete_javascript(json_path, dict))
+        elif tag=='replace':
+            self.emit(self.insert_javascript(json_path, dict))
         else:
             raise NotImplementedError
 

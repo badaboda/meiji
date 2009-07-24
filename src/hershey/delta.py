@@ -11,7 +11,6 @@ def loop(delta, game_code):
                         user='root', passwd='damman#2',
                         db='kbo', charset='utf8',
                         cursorclass=MySQLdb.cursors.DictCursor)
-    consumer = feed.JavascriptSysoutConsumer()
 
     for klass in kbo.datums:
         datum=klass(db, game_code)
@@ -32,6 +31,7 @@ def loop(delta, game_code):
 if __name__=='__main__':
     INTERVAL=5
     game_code=sys.argv[1]
+    consumer = feed.JavascriptSysoutConsumer()
     delta=feed.DeltaGenerator(consumer)
     while True:
         loop(delta, game_code)
