@@ -1,4 +1,4 @@
-import types 
+import types
 import feed
 
 class MockJavascriptConsumer(feed.JavascriptSysoutConsumer):

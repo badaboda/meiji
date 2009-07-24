@@ -8,7 +8,7 @@ from feed import npb
 if __name__=='__main__':
     game_code ='2009072101'
 
-    db = feed.SportsDatabase(host='sports-livedb1', 
+    db = feed.SportsDatabase(host='sports-livedb1',
                         user='root', passwd='damman#2',
                         db='npb', charset='utf8',
                         cursorclass=MySQLdb.cursors.DictCursor)

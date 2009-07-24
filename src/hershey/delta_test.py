@@ -9,7 +9,7 @@ class DeltaTest(unittest.TestCase):
         self.delta=feed.DeltaGenerator(self.consumer)
 
     def testDeltaLoop(self):
-        import delta 
+        import delta
         delta.loop(self.delta, self.game_code)
         delta.loop(self.delta, self.game_code)
 

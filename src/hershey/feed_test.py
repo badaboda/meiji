@@ -18,7 +18,7 @@ class UtilTest(unittest.TestCase):
 
 class FeedAsBootstrapDictTest(unittest.TestCase):
     def setUp(self):
-        self.db = feed.SportsDatabase(host='sports-livedb1', 
+        self.db = feed.SportsDatabase(host='sports-livedb1',
                             user='root', passwd='damman#2',
                             db='kbo', charset='utf8',
                             cursorclass=MySQLdb.cursors.DictCursor)
@@ -45,19 +45,19 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
         return reduce(lambda x,y: merge._merge_insert(x, y), dicts)
 
     def testRegistryPlayerProfile(self):
-        self.assertHierachy('registry:player:96441:profile', 
+        self.assertHierachy('registry:player:96441:profile',
                              self.bootstrap_dict(kbo.RegistryPlayerProfile))
-        
+
     def testRegistryPlayerSeason(self):
-        self.assertHierachy('registry:player:72139:batter:season', 
+        self.assertHierachy('registry:player:72139:batter:season',
                             self.bootstrap_dict(kbo.RegistryPlayerBatterSeason))
 
     def testScoreBoardForCurrentGame(self):
         code=self.game_code
         specs = [(kbo.ScoreBoard, code),
-                   (kbo.ScoreBoardHome, code), 
+                   (kbo.ScoreBoardHome, code),
                    (kbo.ScoreBoardAway, code),
-                   (kbo.ScoreBoardBases, code), 
+                   (kbo.ScoreBoardBases, code),
                    (kbo.ScoreBoardWatingBatters, code),]
         initial_dicts=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
@@ -72,13 +72,13 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
         past_vs_games=kbo.LeaguePastVsGames(self.db, self.game_code)
         past_vs_games.ensure_rows()
         game_codes=today_games.rows+past_vs_games.rows
-        
+
         initial_dicts=[]
         for game_code in game_codes:
             specs = [(kbo.ScoreBoard, game_code),
-                       (kbo.ScoreBoardHome, game_code), 
+                       (kbo.ScoreBoardHome, game_code),
                        (kbo.ScoreBoardAway, game_code),
-                       (kbo.ScoreBoardBases, game_code), 
+                       (kbo.ScoreBoardBases, game_code),
                        (kbo.ScoreBoardWatingBatters, game_code),]
             initial_dicts+=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
@@ -99,9 +99,9 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
         klasses = [kbo.RegistryPlayerProfile,
                     kbo.RegistryPlayerBatterSeason,
                     kbo.RegistryPlayerBatterToday,
-                    kbo.RegistryPlayerPitcherToday, 
-                    kbo.RegistryPlayerPitcherSeason, 
-                    kbo.RegistryTeamSeason, 
+                    kbo.RegistryPlayerPitcherToday,
+                    kbo.RegistryPlayerPitcherSeason,
+                    kbo.RegistryTeamSeason,
                     kbo.RegistryTeamProfile, ]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
         #p(self.merge(initial_dicts))
@@ -110,7 +110,7 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
         klasses = [kbo.Meta, kbo.GameCode]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
         #p(self.merge(initial_dicts))
-        
+
     def testScoreboardForNoDataInScheduleTable(self):
         self.assertRaises(feed.NoDataFoundForScoreboardError,
                             self.bootstrap_dict, kbo.ScoreBoard, 'not_exist_gamecode')
@@ -121,7 +121,7 @@ class FeedAsBootstrapDictTest(unittest.TestCase):
 
 class DeltaGeneratorWithLiveTextFromDbTest(unittest.TestCase):
     def setUp(self):
-        self.db = feed.SportsDatabase(host='localhost', 
+        self.db = feed.SportsDatabase(host='localhost',
                             user='root', passwd='',
                             db='kbo_test', charset='utf8',
                             cursorclass=MySQLdb.cursors.DictCursor)
@@ -138,19 +138,19 @@ class DeltaGeneratorWithLiveTextFromDbTest(unittest.TestCase):
             delete from IE_LiveText where gameid = '%(game_code)s'  AND SeqNO = %(seq)d;
         """ % params)
 
-        datum=kbo.LiveText(self.db, self.game_code) 
+        datum=kbo.LiveText(self.db, self.game_code)
         self.delta.feed(datum)
-        
+
         self.db.execute("""
             insert IE_LiveText (gameID, LiveText, SeqNO, Inning, bTop, textStyle) values('%(game_code)s','%(seq)d',%(seq)d,6,0,1);
         """ % params)
 
-        datum=kbo.LiveText(self.db, self.game_code) 
+        datum=kbo.LiveText(self.db, self.game_code)
         self.delta.feed(datum)
-        
+
         self.assertEquals(
             ["db.livetext.push({'inning': 6, 'textstyle': 1, 'text': u'305', 'seq': 305, 'btop': 0});"], self.consumer.lst)
-        
+
 
 class DeltaGeneratorTest(unittest.TestCase):
     def setUp(self):
@@ -166,7 +166,7 @@ class DeltaGeneratorTest(unittest.TestCase):
         self.delta.feed(mock.MockDatum(self.KEYED_JSON_PATH, [{ "pcode": "79260", "name": "장원삼" },
                                                               { "pcode": "98260", "name": "정삼흠" }]))
         self.assertEquals(
-            ["db.registry.players['98260'].profile={'pcode': '98260', 'name': %s};"%repr('정삼흠')], 
+            ["db.registry.players['98260'].profile={'pcode': '98260', 'name': %s};"%repr('정삼흠')],
             self.consumer.lst)
 
     def test_insert_list_datum(self):
@@ -175,14 +175,14 @@ class DeltaGeneratorTest(unittest.TestCase):
                                                           { "a": 2, "b" : 2}]))
         self.assertEquals(
             ["db.livetext.push({'a': 2, 'b': 2});"], self.consumer.lst)
-        
+
 
     def test_delete(self):
         self.delta.feed(mock.MockDatum(self.KEYED_JSON_PATH, [{ "pcode": "79260", "name": "장원삼" },
                                                         { "pcode": "98260", "name": "정삼흠" }]))
         self.delta.feed(mock.MockDatum(self.KEYED_JSON_PATH, [{ "pcode": "79260", "name": "장원삼" }]))
         self.assertEquals(
-            ["delete db.registry.players['98260'].profile;"], 
+            ["delete db.registry.players['98260'].profile;"],
             self.consumer.lst)
 
     def test_replace(self):
@@ -191,13 +191,13 @@ class DeltaGeneratorTest(unittest.TestCase):
         self.delta.feed(mock.MockDatum(self.KEYED_JSON_PATH, [{ "pcode": "79260", "name": "장원삼2" },
                                                         { "pcode": "98260", "name": "정삼흠" }]))
         self.assertEquals(
-            ["db.registry.players['79260'].profile={'pcode': '79260', 'name': %s};"%repr('장원삼2')], 
+            ["db.registry.players['79260'].profile={'pcode': '79260', 'name': %s};"%repr('장원삼2')],
             self.consumer.lst)
-        
+
 
 class FeedAsDeltaGeneratorInput(unittest.TestCase):
     def setUp(self):
-        self.db = feed.SportsDatabase(host='sports-livedb1', 
+        self.db = feed.SportsDatabase(host='sports-livedb1',
                             user='root', passwd='damman#2',
                             db='kbo', charset='utf8',
                             cursorclass=MySQLdb.cursors.DictCursor)
@@ -214,7 +214,7 @@ class FeedAsDeltaGeneratorInput(unittest.TestCase):
         d.ensure_rows()
         d.rows[0]['name']='xxx'
         self.delta.feed(d)
-        
+
         self.assert_(len(self.consumer.lst) > 0)
 
     def testAnotherKindFeedShouldNotGenerateDelta(self):
@@ -224,7 +224,7 @@ class FeedAsDeltaGeneratorInput(unittest.TestCase):
         d=kbo.RegistryPlayerBatterSeason(self.db, self.game_code)
         d.ensure_rows()
         self.delta.feed(d)
-        
+
         self.assertEquals(0, len(self.consumer.lst))
 
     def testAllDatumCouldCallAsDeltaGeneratorInput(self):
@@ -237,13 +237,13 @@ class FeedAsDeltaGeneratorInput(unittest.TestCase):
 class DictMergeTest(unittest.TestCase):
     def test_merge_insert(self):
         initial_data = \
-            { "registry": 
-                { "players": 
+            { "registry":
+                { "players":
                     { "79260":
-                        { "profile": 
+                        { "profile":
                             { "name": "장원삼" }}}}}
         delta_spec = \
-             ('insert', 
+             ('insert',
                { "registry":
                  { "players":
                    { "98260":
@@ -258,19 +258,19 @@ class DictMergeTest(unittest.TestCase):
                                    { "name": "장원삼" }},
                       "98260": { "profile":
                                    { "name": "정삼흠" }}}}}, n)
-                        
+
     def test_merge_delete(self):
         initial_data = \
-            { "registry": 
-                { "players": 
+            { "registry":
+                { "players":
                     { "79260":
-                        { "profile": 
+                        { "profile":
                             { "name": "장원삼" }},
                       "98260":
                         { "profile":
                             { "name": "정삼흠" }}}}}
         delta_spec = \
-             ('delete', 
+             ('delete',
                { "registry":
                  { "players":
                    { "79260":
@@ -287,4 +287,4 @@ class DictMergeTest(unittest.TestCase):
 
 if __name__=='__main__':
     unittest.main()
-        
+

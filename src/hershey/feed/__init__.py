@@ -136,7 +136,7 @@ class JavascriptSysoutConsumer:
 
     def insert_javascript(self, json_path, dict):
         return "%s=%s;" % (self._js_variable("db", json_path, dict), str(dict))
-        
+
     def delete_javascript(self, json_path, dict):
         return "delete %s;" % (self._js_variable("db", json_path, dict))
 
@@ -146,10 +146,10 @@ class JavascriptSysoutConsumer:
         for i, k in enumerate(keys):
             is_placeholder=lambda s: s.startswith("**")
             if is_placeholder(k):
-                js_key_parts.append("['%s']" % dict[k[2:]])    
+                js_key_parts.append("['%s']" % dict[k[2:]])
             else:
                 js_key_parts.append(".%s" % k)
-        return ''.join(js_key_parts) 
+        return ''.join(js_key_parts)
 
 # ----------
 
@@ -170,7 +170,7 @@ class RelayDatum(object):
 
     def as_delta_generator_input(self):
         self.ensure_rows()
-        return list_of_dict_to_list_of_pairs(self.rows) 
+        return list_of_dict_to_list_of_pairs(self.rows)
 
     def __parse_json_path(self, json_path):
         path=json_path.split(':')
@@ -196,7 +196,7 @@ class RelayDatum(object):
                     del row[key]
                 else:
                     result[row[key]]=row
-                    
+
             return hierachy_dict(path_before_key, result)
         else:
             return hierachy_dict(path, self.rows)

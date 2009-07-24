@@ -7,7 +7,7 @@ from feed import kbo
 
 
 def loop(delta, game_code):
-    db = feed.SportsDatabase(host='sports-livedb1', 
+    db = feed.SportsDatabase(host='sports-livedb1',
                         user='root', passwd='damman#2',
                         db='kbo', charset='utf8',
                         cursorclass=MySQLdb.cursors.DictCursor)
@@ -16,7 +16,7 @@ def loop(delta, game_code):
         datum=klass(db, game_code)
         delta.feed(datum)
 
-    league_datums = [ kbo.LeagueTodayGames(db, game_code), 
+    league_datums = [ kbo.LeagueTodayGames(db, game_code),
                       kbo.LeaguePastVsGames(db, game_code) ]
     game_codes = [game_code]
     for klass in kbo.league_datums:

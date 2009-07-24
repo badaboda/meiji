@@ -38,4 +38,4 @@ def _merge_delete(org, data):
 
     del org[path_to_leaf[-2]]
     return _org
-    
+

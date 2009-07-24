@@ -23,7 +23,7 @@ def send_as_raw(channel, msg):
         transport.close()
     except Thrift.TException, tx:
         print '%s' % (tx.message)
-           
+
 def create(channel):
     try:
         transport = TSocket.TSocket('localhost', 9999)

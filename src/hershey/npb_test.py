@@ -12,7 +12,7 @@ import merge
 
 class NpbFeedTest(unittest.TestCase):
     def setUp(self):
-        self.db = feed.SportsDatabase(host='sports-livedb1', 
+        self.db = feed.SportsDatabase(host='sports-livedb1',
                             user='root', passwd='damman#2',
                             db='npb', charset='utf8',
                             cursorclass=MySQLdb.cursors.DictCursor)
@@ -44,19 +44,19 @@ class NpbFeedTest(unittest.TestCase):
         return reduce(lambda x,y: merge._merge_insert(x, y), dicts)
 
     def testRegistryPlayerProfile(self):
-        self.assertHierachy('registry:player:700014:profile', 
+        self.assertHierachy('registry:player:700014:profile',
                              self.bootstrap_dict(npb.RegistryPlayerProfile))
 
     def testRegistryPlayerSeason(self):
-        self.assertHierachy('registry:player:11983:batter:season', 
+        self.assertHierachy('registry:player:11983:batter:season',
                             self.bootstrap_dict(npb.RegistryPlayerBatterSeason))
-    
+
     def testScoreBoardForCurrentGame(self):
         code=self.game_code
         specs = [(npb.ScoreBoard, code),
-                   (npb.ScoreBoardHome, code), 
+                   (npb.ScoreBoardHome, code),
                    (npb.ScoreBoardAway, code),
-                   (npb.ScoreBoardBases, code), 
+                   (npb.ScoreBoardBases, code),
                    (npb.ScoreBoardWatingBatters, code),]
         initial_dicts=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
@@ -69,9 +69,9 @@ class NpbFeedTest(unittest.TestCase):
         klasses = [npb.RegistryPlayerProfile,
                     npb.RegistryPlayerBatterSeason,
                     npb.RegistryPlayerBatterToday,
-                    npb.RegistryPlayerPitcherToday, 
-                    npb.RegistryPlayerPitcherSeason, 
-                    npb.RegistryTeamSeason, 
+                    npb.RegistryPlayerPitcherToday,
+                    npb.RegistryPlayerPitcherSeason,
+                    npb.RegistryTeamSeason,
                     npb.RegistryTeamProfile, ]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
         p(self.merge(initial_dicts))
@@ -83,4 +83,4 @@ class NpbFeedTest(unittest.TestCase):
 
 if __name__=='__main__':
     unittest.main()
-        
+

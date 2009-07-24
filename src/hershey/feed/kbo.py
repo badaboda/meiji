@@ -11,18 +11,18 @@ class LiveText(feed.RelayDatumAsList):
 
     def fetch(self):
         return self.db.execute("""
-            SELECT 
-                IE_LiveText.SeqNO     AS seq, 
-                IE_LiveText.Inning    AS inning, 
-                IE_LiveText.bTop      AS btop, 
-                IE_LiveText.LiveText  AS text, 
-                IE_LiveText.textStyle AS textstyle 
-            FROM 
-                IE_LiveText 
-            WHERE 
+            SELECT
+                IE_LiveText.SeqNO     AS seq,
+                IE_LiveText.Inning    AS inning,
+                IE_LiveText.bTop      AS btop,
+                IE_LiveText.LiveText  AS text,
+                IE_LiveText.textStyle AS textstyle
+            FROM
+                IE_LiveText
+            WHERE
                 IE_LiveText.gameID = '%s'
-            ORDER BY 
-                seqNo 
+            ORDER BY
+                seqNo
         """ % (self.game_code))
 
 class Meta(feed.RelayDatumAsAtom):
@@ -57,7 +57,7 @@ class RegistryPlayerProfile(feed.RelayDatum):
             p.name as name,
             p.backnum as backnum,
             p.position as position,
-            p.hittype as hittype, 
+            p.hittype as hittype,
             p.weight as weight,
             p.height as height
         """
@@ -66,15 +66,15 @@ class RegistryPlayerProfile(feed.RelayDatum):
                     SELECT %s
                     FROM IE_BatterRecord br, Kbo_Person p
                     WHERE br.PlayerID = p.PCODE
-                        and br.gameID = '%s' 
+                        and br.gameID = '%s'
                 """ % (sql_colums, self.game_code))
         pitcher_rows=self.db.execute("""
                     SELECT %s
                     FROM IE_PitcherRecord pr, Kbo_Person p
                     WHERE pr.PlayerID = p.PCODE
-                        and pr.gameID = '%s' 
+                        and pr.gameID = '%s'
                 """ % (sql_colums, self.game_code))
-        rows=batter_rows+pitcher_rows    
+        rows=batter_rows+pitcher_rows
         return rows
 
 class RegistryPlayerBatterSeason(feed.RelayDatum):
@@ -87,7 +87,7 @@ class RegistryPlayerBatterSeason(feed.RelayDatum):
                     FROM IE_BatterRecord br, Kbo_BatTotal b
                     WHERE br.PlayerID = b.PCODE
                         AND substring(br.gameID,1,4) = b.GYEAR
-                        AND br.gameID = '%s' 
+                        AND br.gameID = '%s'
                 """ % self.game_code)
         return rows
 
@@ -97,16 +97,16 @@ class RegistryPlayerBatterToday(feed.RelayDatum):
 
     def fetch(self):
         rows=self.db.execute("""
-                    SELECT br.playerId as pcode, 
-                            br.OAB        AS ab, 
-                            (br.H1+ br.H2 + br.H3 + br.HR)     AS h, 
-                            br.HR     AS hr, 
-                            br.BB     AS bb, 
-                            br.RBI     AS rbi, 
+                    SELECT br.playerId as pcode,
+                            br.OAB        AS ab,
+                            (br.H1+ br.H2 + br.H3 + br.HR)     AS h,
+                            br.HR     AS hr,
+                            br.BB     AS bb,
+                            br.RBI     AS rbi,
                             br.SO     AS so,
                             br.Run     AS r
                     FROM IE_BatterRecord br
-                    WHERE br.gameID = '%s' 
+                    WHERE br.gameID = '%s'
                 """ % self.game_code)
         return rows
 
@@ -116,17 +116,17 @@ class RegistryPlayerPitcherToday(feed.RelayDatum):
 
     def fetch(self):
         rows=self.db.execute("""
-                    SELECT  pr.PlayerID       AS pcode, 
-                            pr.Inning         AS ip, 
-                            pr.Run            AS r, 
-                            pr.ER             AS er, 
-                            pr.Hit            AS h, 
-                            pr.SO             AS so, 
-                            pr.PitchBallCnt   AS s, 
+                    SELECT  pr.PlayerID       AS pcode,
+                            pr.Inning         AS ip,
+                            pr.Run            AS r,
+                            pr.ER             AS er,
+                            pr.Hit            AS h,
+                            pr.SO             AS so,
+                            pr.PitchBallCnt   AS s,
                             pr.PitchStrikeCnt AS b,
                             (pr.PitchBallCnt + pr.PitchStrikeCnt) AS np
                     FROM IE_PitcherRecord pr
-                    WHERE pr.gameID = '%s' 
+                    WHERE pr.gameID = '%s'
                 """ % self.game_code)
         return rows
 
@@ -136,16 +136,16 @@ class RegistryPlayerPitcherSeason(feed.RelayDatum):
 
     def fetch(self):
         rows=self.db.execute("""
-                    SELECT  
+                    SELECT
                         pt.pcode as pcode,
-                        pt.W, 
+                        pt.W,
                         pt.L,
                         pt.HIT,
                         pt.HR,
                         pt.KK,
                         pt.SV
                     FROM IE_PitcherRecord pr, Kbo_PitTotal pt
-                    WHERE pr.gameID = '%s' 
+                    WHERE pr.gameID = '%s'
                         AND pt.PCODE = pr.PlayerID
                         AND substring(pr.gameID,1,4) = pt.GYEAR
                 """ % self.game_code)
@@ -170,11 +170,11 @@ class RegistryTeamProfile(feed.RelayDatum):
 
     def fetch(self):
         rows=self.db.execute("""
-                    SELECT team_id as tcode, 
+                    SELECT team_id as tcode,
                            teamname1,
                            teamname2,
                            stadium,
-                           region 
+                           region
                     FROM TEAM
                 """)
         return rows
@@ -208,15 +208,15 @@ class LeaguePastVsGames(feed.RelayDatumAsList):
 
     def fetch(self):
         rows=self.db.execute("""
-                SELECT 
+                SELECT
                     a.gmkey as game_code
-                FROM 
+                FROM
                     Kbo_Schedule a, (select gmkey as game_code, home, visit  from Kbo_Schedule where gmkey = '%s') b
-                WHERE 
+                WHERE
                   ((a.home = b.home and a.visit = b.visit) OR
                    (a.home = b.visit and a.visit = b.home))
                   AND
-                    date < substring(b.game_code,1,8) 
+                    date < substring(b.game_code,1,8)
                   AND
                     date > date_format(curdate(),'%%Y0401')
                 ORDER BY date DESC
@@ -242,10 +242,10 @@ class ScoreBoard(feed.RelayDatum):
                    stadium,
                    dheader as double_header,
                    gyear,
-                   gmonth, 
+                   gmonth,
                    gday,
                    gtime
-            FROM Kbo_Schedule 
+            FROM Kbo_Schedule
             WHERE gmkey = '%s'
         """ % (self.game_code))
         if len(rows) == 0:
@@ -254,17 +254,17 @@ class ScoreBoard(feed.RelayDatum):
 
     def fetch_ie_livetext(self):
         rows=self.db.execute("""
-            SELECT 
-                IE_LiveText.inning AS inning, 
+            SELECT
+                IE_LiveText.inning AS inning,
                 IE_LiveText.bTop  AS bhome,
                 if(( textStyle='99'),'end','ing') as status
-            FROM 
+            FROM
                 IE_LiveText
-            WHERE 
+            WHERE
                 IE_LiveText.gameID = '%s'
-            ORDER BY 
-                inning DESC, 
-                bhome 
+            ORDER BY
+                inning DESC,
+                bhome
             LIMIT 1
         """ % self.game_code)
         if len(rows) == 0:
@@ -279,7 +279,7 @@ class ScoreBoard(feed.RelayDatum):
                     pitcher as pitcher_pcode,
                     batter as batter_pcode
             FROM IE_BallCount
-            WHERE gameID = '%s' 
+            WHERE gameID = '%s'
         """ % self.game_code)
         if len(rows) == 0:
             raise feed.NoDataFoundForScoreboardError()
@@ -293,16 +293,16 @@ class ScoreBoard(feed.RelayDatum):
             row1.update(row2)
             row1.update(row3)
         except feed.NoDataFoundForScoreboardError:
-            # 아직 시작하지 않은 경기라면 
-            # Schedule 테이블에는 game_code가 있는데 
-            # LiveText 테이블에는 데이터가 없을 수 있다 
+            # 아직 시작하지 않은 경기라면
+            # Schedule 테이블에는 game_code가 있는데
+            # LiveText 테이블에는 데이터가 없을 수 있다
             pass
 
         return [row1]
 
     def postprocess(self, row):
         row=super(ScoreBoard, self).postprocess(row)
-        row['game_datetime']="%s-%s-%sT%sZ" % (row['gyear'], row['gmonth'], row['gday'], 
+        row['game_datetime']="%s-%s-%sT%sZ" % (row['gyear'], row['gmonth'], row['gday'],
                                                re.search('\d+:\d+', row['gtime']).group(0))
         for name_to_remove in ['gyear', 'gmonth', 'gday', 'gtime']:
             del row[name_to_remove]
@@ -312,26 +312,26 @@ class ScoreBoard(feed.RelayDatum):
 class ScoreBoardHomeOrAwayMixIn:
     def fetch(self, bhome):
         row=self.db.execute("""
-                SELECT 
+                SELECT
                     rheb.gameID as game_code,
-                    rheb.Run as r, 
-                    rheb.Hit as h, 
-                    rheb.Error as e, 
+                    rheb.Run as r,
+                    rheb.Hit as h,
+                    rheb.Error as e,
                     rheb.BallFour as b
-                FROM 
+                FROM
                     IE_ScoreRHEB rheb
-                WHERE 
+                WHERE
                     rheb.gameID = '%s'
                     AND rheb.bhome = %d
         """ % (self.game_code, bhome))[0]
 
         innings=self.db.execute("""
-                SELECT 
+                SELECT
                     inning,
                     score
-                FROM 
-                    IE_Scoreinning 
-                WHERE 
+                FROM
+                    IE_Scoreinning
+                WHERE
                     IE_Scoreinning.gameID = '%s'
                     AND IE_Scoreinning.bhome = %d
                 ORDER BY inning asc
@@ -369,9 +369,9 @@ class ScoreBoardBases(feed.RelayDatum):
 
     def fetch(self):
         rows=self.db.execute("""
-                SELECT gameID as game_code, 
-                    base1, 
-                    base2, 
+                SELECT gameID as game_code,
+                    base1,
+                    base2,
                     base3
                 FROM IE_BallCount
                 WHERE gameID = '%s'
@@ -398,8 +398,8 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
     def current_batter_pcode(self):
         rows = self.db.execute("""
             SELECT batter
-            FROM IE_BallCount 
-            WHERE gameID = '%s' 
+            FROM IE_BallCount
+            WHERE gameID = '%s'
         """ % self.game_code)
         assert len(rows) == 1
         return rows[0]['batter']
@@ -419,17 +419,17 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
 
 def current_btop(db, game_code):
     # 9회초(btop=1) 에서 9회말로 넘어가는 순간
-    #   홈팀이 이기고 있다면 
-    #   9회말에 홈팀이 공격을 하지 않고 경기가 끝나고 
-    # IE_LiveText에 inning=99,bTop=0로 '경기 종료'라는 메세지가 insert된다. 
-    
-    # IE_BallCount에는 9회초에 away의 타자pcode가 batter field에 들어가 업데이트가 중지되기에 
-    #   경기가 끝난 이후에 batorder를 잘 얻어오려면 
+    #   홈팀이 이기고 있다면
+    #   9회말에 홈팀이 공격을 하지 않고 경기가 끝나고
+    # IE_LiveText에 inning=99,bTop=0로 '경기 종료'라는 메세지가 insert된다.
+
+    # IE_BallCount에는 9회초에 away의 타자pcode가 batter field에 들어가 업데이트가 중지되기에
+    #   경기가 끝난 이후에 batorder를 잘 얻어오려면
     #   inning=99를 제외하 btop 값을 select해야 한다.
     rows = db.execute("""
         SELECT btop
         FROM IE_LiveText
-        WHERE gameID = '%s' 
+        WHERE gameID = '%s'
             AND inning <> 99
         ORDER BY seqNo desc
         LIMIT 1
@@ -443,18 +443,18 @@ def fetch_current_batter_list(db, game_code):
     bhome=((btop==0) and 1) or 0
 
     lineup_sql="""
-        SELECT br.bhome as home, 
+        SELECT br.bhome as home,
                br.playerID as pcode,
                br.BatOrder as batorder,
                br.position as position_code
         FROM IE_BatterRecord br
-        INNER JOIN 
+        INNER JOIN
             Kbo_Person p
             ON (br.PlayerID = p.PCODE)
         LEFT OUTER JOIN
             Kbo_BatTotal bt
             ON (br.PlayerID = bt.PCODE)
-        WHERE 
+        WHERE
             br.gameid = '%s'
             AND br.bhome = %d
         ORDER BY br.BatOrder ASC, br.SeqNo DESC
@@ -477,19 +477,19 @@ def fetch_current_batter_list(db, game_code):
 datums = [RegistryPlayerProfile,
             RegistryPlayerBatterSeason,
             RegistryPlayerBatterToday,
-            RegistryPlayerPitcherToday, 
-            RegistryPlayerPitcherSeason, 
-            RegistryTeamSeason, 
+            RegistryPlayerPitcherToday,
+            RegistryPlayerPitcherSeason,
+            RegistryTeamSeason,
             RegistryTeamProfile,
-            LiveText, 
+            LiveText,
             Meta,
             GameCode]
 
-league_datums = [ LeagueTodayGames, 
+league_datums = [ LeagueTodayGames,
                   LeaguePastVsGames ]
 
 scoreboard_datums = [ScoreBoard,
-                   ScoreBoardHome, 
+                   ScoreBoardHome,
                    ScoreBoardAway,
-                   ScoreBoardBases, 
+                   ScoreBoardBases,
                    ScoreBoardWatingBatters,]
