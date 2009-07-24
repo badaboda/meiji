@@ -40,7 +40,8 @@ class NoDataFoundError(exceptions.Exception):
     pass
 
 class NoDataFoundForScoreboardError(exceptions.Exception):
-    pass
+    def __init__(self, game_code, table):
+        super(NoDataFoundForScoreboardError, self).__init__("no data for game_code(%s) at table(%s)" % (game_code, table))
 
 class ContextCursor:
     def __init__(self, cursor):

@@ -185,7 +185,7 @@ class ScoreBoard(feed.RelayDatum):
             WHERE gmkey = '%s'
         """ % (self.game_code))
         if len(rows) == 0:
-            raise feed.NoDataFoundForScoreboardError()
+            raise feed.NoDataFoundForScoreboardError(self.game_code, "MLB_Live_Schedule")
         return rows[0]
 
     def fetch_ie_livetext(self):
@@ -204,7 +204,7 @@ class ScoreBoard(feed.RelayDatum):
             LIMIT 1
         """ % self.game_code)
         if len(rows) == 0:
-            raise feed.NoDataFoundForScoreboardError()
+            raise feed.NoDataFoundForScoreboardError(self.game_code, "MLB_LiveText")
         return rows[0]
 
     def fetch_ballcount(self):
@@ -218,7 +218,7 @@ class ScoreBoard(feed.RelayDatum):
             WHERE gameID = '%s'
         """ % self.game_code)
         if len(rows) == 0:
-            raise feed.NoDataFoundForScoreboardError()
+            raise feed.NoDataFoundForScoreboardError(self.game_code, "MLB_BallCount")
         return rows[0]
 
     def fetch(self):
@@ -260,7 +260,7 @@ class ScoreBoardHomeOrAwayMixIn:
                     AND rheb.bhome = %d
         """ % (self.game_code, bhome))
         if len(rows)==0:
-            raise feed.NoDataFoundForScoreboardError("no data in table(%s) with param(%s, %d)" % ('MLB_ScoreRHEB', self.game_code, bhome))
+            raise feed.NoDataFoundForScoreboardError(self.game_code,'MLB_ScoreRHEB:%d' % bhome)
         row=rows[0]
 
         innings=self.db.execute("""
@@ -315,7 +315,7 @@ class ScoreBoardBases(feed.RelayDatum):
                 WHERE gameID = '%s'
             """ % self.game_code)
         if len(rows)==0:
-            raise feed.NoDataFoundForScoreboardError("no data in table(%s) with param(%s)" % ('MLB_BallCount', self.game_code))
+            raise feed.NoDataFoundForScoreboardError(self.game_code, 'MLB_BallCount')
         row = rows[0]
 
         current_batter_list = fetch_current_batter_list(self.db, self.game_code)
@@ -423,7 +423,7 @@ def current_btop(db, game_code):
         LIMIT 1
     """ % game_code)
     if len(rows)==0:
-        raise feed.NoDataFoundForScoreboardError("no data in table(%s) with param(%s)" % ('MLB_LiveText', game_code))
+        raise feed.NoDataFoundForScoreboardError(game_code, 'MLB_LiveText')
     return int(rows[0]['btop'])
 
 def fetch_current_batter_list(db, game_code):

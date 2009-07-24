@@ -249,7 +249,7 @@ class ScoreBoard(feed.RelayDatum):
             WHERE gmkey = '%s'
         """ % (self.game_code))
         if len(rows) == 0:
-            raise feed.NoDataFoundForScoreboardError()
+            raise feed.NoDataFoundForScoreboardError(self.game_code, "Kbo_Schedule")
         return rows[0]
 
     def fetch_ie_livetext(self):
@@ -268,7 +268,7 @@ class ScoreBoard(feed.RelayDatum):
             LIMIT 1
         """ % self.game_code)
         if len(rows) == 0:
-            raise feed.NoDataFoundForScoreboardError()
+            raise feed.NoDataFoundForScoreboardError(self.game_code, "IE_LiveText")
         return rows[0]
 
     def fetch_ballcount(self):
@@ -282,7 +282,7 @@ class ScoreBoard(feed.RelayDatum):
             WHERE gameID = '%s'
         """ % self.game_code)
         if len(rows) == 0:
-            raise feed.NoDataFoundForScoreboardError()
+            raise feed.NoDataFoundForScoreboardError(self.game_code, "IE_BallCount")
         return rows[0]
 
     def fetch(self):

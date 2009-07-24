@@ -188,7 +188,7 @@ class ScoreBoard(feed.RelayDatum):
             WHERE gmkey = '%s'
         """ % (self.game_code))
         if len(rows) == 0:
-            raise feed.NoDataFoundForScoreboardError("no data for game_code(%s) at table(%s)" % (self.game_code, "SCHEDULE"))
+            raise feed.NoDataFoundForScoreboardError(game_code, "SCHEDULE")
         return rows[0]
 
     def fetch_livetext(self):
@@ -207,7 +207,7 @@ class ScoreBoard(feed.RelayDatum):
             LIMIT 1
         """ % self.game_code)
         if len(rows) == 0:
-            raise feed.NoDataFoundForScoreboardError("no data for game_code(%s) at table(%s)" % (self.game_code, "LIVETEXT"))
+            raise feed.NoDataFoundForScoreboardError(game_code, "LIVETEXT")
         return rows[0]
 
     def fetch_ballcount(self):
@@ -221,7 +221,7 @@ class ScoreBoard(feed.RelayDatum):
             WHERE gmkey = '%s'
         """ % self.game_code)
         if len(rows) == 0:
-            raise feed.NoDataFoundForScoreboardError("no data for game_code(%s) at table(%s)" % (self.game_code, "BALLCOUNT"))
+            raise feed.NoDataFoundForScoreboardError(game_code, "BALLCOUNT")
         return rows[0]
 
     def fetch(self):
@@ -229,8 +229,8 @@ class ScoreBoard(feed.RelayDatum):
         row2=self.fetch_livetext()
         row3=self.fetch_ballcount()
 
-        row1.update(rows2)
-        row1.update(rows3)
+        row1.update(row2)
+        row1.update(row3)
         return [row1]
 
     def postprocess(self, row):
@@ -311,7 +311,7 @@ class ScoreBoardBases(feed.RelayDatum):
                 WHERE gmkey = '%s'
             """ % self.game_code)
         if len(rows) == 0:
-            raise feed.NoDataFoundForScoreboardError("no data for game_code(%s) at table(%s)" % (self.game_code, "BALLCOUNT"))
+            raise feed.NoDataFoundForScoreboardError(game_code, "BALLCOUNT")
         return rows
 
 class ScoreBoardWatingBatters(feed.RelayDatumAsList):
