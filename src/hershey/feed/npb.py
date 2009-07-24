@@ -127,12 +127,12 @@ class RegistryPlayerPitcherSeason(feed.RelayDatum):
         rows=self.db.execute("""
                     SELECT
                         pt.pcode as pcode,
-                        pt.WIN,
-                        pt.LOSE,
-                        pt.HIT,
-                        pt.HR,
-                        pt.KK,
-                        pt.SV
+                        pt.WIN as win,
+                        pt.LOSE as lose,
+                        pt.HIT as hit,
+                        pt.HR as hr,
+                        pt.KK as kk,
+                        pt.SV as sv
                     FROM PITCHERRECORD pr, PITCHER_P pt
                     WHERE pr.gmkey = '%s'
                         AND pt.PCODE = pr.PlayerID
@@ -187,7 +187,7 @@ class ScoreBoard(feed.RelayDatum):
             FROM SCHEDULE
             WHERE gmkey = '%s'
         """ % (self.game_code))
-        if len(rows) != 1:
+        if len(rows) == 0:
             raise feed.NoDataFoundForScoreboardError("no data for game_code(%s) at table(%s)" % (self.game_code, "SCHEDULE"))
         row1 = rows[0]
 
@@ -205,7 +205,7 @@ class ScoreBoard(feed.RelayDatum):
                 bhome
             LIMIT 1
         """ % self.game_code)
-        if len(rows2) != 1:
+        if len(rows2) == 0:
             raise feed.NoDataFoundForScoreboardError("no data for game_code(%s) at table(%s)" % (self.game_code, "LIVETEXT"))
         row2=rows2[0]
 
@@ -218,7 +218,7 @@ class ScoreBoard(feed.RelayDatum):
             FROM BALLCOUNT
             WHERE gmkey = '%s'
         """ % self.game_code)
-        if len(rows3) != 1:
+        if len(rows3) == 0:
             raise feed.NoDataFoundForScoreboardError("no data for game_code(%s) at table(%s)" % (self.game_code, "BALLCOUNT"))
         row1.update(rows3[0])
 
@@ -301,7 +301,7 @@ class ScoreBoardBases(feed.RelayDatum):
                 FROM BALLCOUNT
                 WHERE gmkey = '%s'
             """ % self.game_code)
-        if len(rows) != 1:
+        if len(rows) == 0:
             raise feed.NoDataFoundForScoreboardError("no data for game_code(%s) at table(%s)" % (self.game_code, "BALLCOUNT"))
         return rows
 

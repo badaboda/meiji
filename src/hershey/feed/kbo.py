@@ -138,12 +138,12 @@ class RegistryPlayerPitcherSeason(feed.RelayDatum):
         rows=self.db.execute("""
                     SELECT
                         pt.pcode as pcode,
-                        pt.W,
-                        pt.L,
-                        pt.HIT,
-                        pt.HR,
-                        pt.KK,
-                        pt.SV
+                        pt.W as win,
+                        pt.L as lose,
+                        pt.HIT as hit,
+                        pt.HR as hr,
+                        pt.KK as kk,
+                        pt.SV as sv
                     FROM IE_PitcherRecord pr, Kbo_PitTotal pt
                     WHERE pr.gameID = '%s'
                         AND pt.PCODE = pr.PlayerID
@@ -359,6 +359,7 @@ class ScoreBoardBases(feed.RelayDatum):
         return u"registry:scoreboard:**game_code:bases"
 
     def find_pcode_of_batorder(self, batorder, current_batter_list):
+        assert type(batorder)==types.IntType, "batorder should be int but %s" % type(batorder)
         if batorder == 0:
             return None
         for b in current_batter_list:
