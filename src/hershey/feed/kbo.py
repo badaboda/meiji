@@ -377,7 +377,8 @@ class ScoreBoardBases(feed.RelayDatum):
                 FROM IE_BallCount
                 WHERE gameID = '%s'
             """ % self.game_code)
-        assert len(rows) == 1
+        if len(rows) == 0:
+            raise feed.NoDataFoundForScoreboardError(self.game_code, "IE_BallCount")
         row = rows[0]
 
         current_batter_list = fetch_current_batter_list(self.db, self.game_code)
@@ -402,7 +403,8 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
             FROM IE_BallCount
             WHERE gameID = '%s'
         """ % self.game_code)
-        assert len(rows) == 1
+        if len(rows) == 0:
+            raise feed.NoDataFoundForScoreboardError(self.game_code, "IE_BallCount")
         return rows[0]['batter']
 
     def current_batorder(self, batter_list):
@@ -435,7 +437,8 @@ def current_btop(db, game_code):
         ORDER BY seqNo desc
         LIMIT 1
     """ % game_code)
-    assert len(rows) == 1
+    if len(rows) == 0:
+        raise feed.NoDataFoundForScoreboardError(self.game_code, "IE_LiveText")
     return rows[0]['btop']
 
 def fetch_current_batter_list(db, game_code):

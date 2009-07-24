@@ -340,7 +340,8 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
             FROM MLB_BallCount
             WHERE gameID = '%s'
         """ % self.game_code)
-        assert len(rows) == 1
+        if len(rows) == 0:
+            raise feed.NoDataFoundForScoreboardError(self.game_code, "MLB_BallCount")
         return rows[0]['batter']
 
     def current_batorder(self, batter_list):
