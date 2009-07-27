@@ -13,9 +13,9 @@ class DeltaTest(unittest.TestCase):
         self.delta=feed.DeltaGenerator(self.consumer)
 
     def testDeltaLoop(self):
-        import delta
-        delta.loop(self.delta, self.game_code)
-        delta.loop(self.delta, self.game_code)
+        import kbo_delta
+        kbo_delta.loop(self.delta, self.game_code)
+        kbo_delta.loop(self.delta, self.game_code)
 
 class DeltaGeneratorWithLiveTextFromDbTest(unittest.TestCase):
     def setUp(self):
