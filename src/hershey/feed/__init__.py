@@ -85,32 +85,33 @@ class DeltaGenerator:
         current = datum.as_delta_generator_input()
         json_path=datum.json_path()
         if self.old_input.has_key(json_path):
-            for tag, list_of_pair in self.diff_seq_specs(self.old_input[json_path], current):
+            for tag, list_of_pair, i1, i2, j1, j2 in self.diff_seq_specs(self.old_input[json_path], current):
                 if tag == 'equal':
                     pass
                 else:
-                    self.consumer.feed(tag, datum, dict(list_of_pair))
+                    self.consumer.feed(tag, datum, dict(list_of_pair), i1, i2, j1, j2)
         self.old_input[json_path] = current
 
     def diff_seq_specs(self, old, current):
         cruncher = SequenceMatcher(None, old, current)
         for tag, i1, i2, j1, j2 in cruncher.get_opcodes():
+            #print tag, i1, i2, j1, j2 
             a = []
             if tag == "insert":
                 for t in current[j1:j2]:
-                    yield tag, t
+                    yield tag, t, i1, i2, j1, j2
             elif tag == "delete":
                 for t in old[i1:i2]:
-                    yield tag, t
+                    yield tag, t, i1, i2, j1, j2
             elif tag == "replace":
                 #for t in old[i1:i2]:
                 #    yield "delete", t
                 #for t in current[j1:j2]:
                 #    yield "insert", t
                 for t in current[j1:j2]:
-                    yield tag, t
+                    yield tag, t, i1, i2, j1, j2
             elif tag == "equal":
-                yield tag, None
+                yield tag, None, i1, i2, j1, j2
             else:
                 raise ValueError, 'unknown tag %s' % (tag,)
 
@@ -121,15 +122,21 @@ class JavascriptSysoutConsumer:
     def emit(self, s):
         print s
 
-    def feed(self, tag, datum, dict):
+    def feed(self, tag, datum, dict, i1, i2, j1, j2):
         json_path = datum.json_path()
         if tag in ['insert']:
             if isinstance(datum, RelayDatumAsList):
-                self.emit('db.%s.push(%s);' % (json_path, str(dict)))
+                self.emit('db.%s.push(%s);' % (json_path, str(dict)))   # splice로 하면 좋은데 여러개가 동시에 지워졌을 때 
+                                                                        # index가 바뀌어 버리는 것을 처리하기가 마땅치가 않다
+                                                                        #   야구에서는 list를 쓰는 것이 끝에만 추가되는 것이라 
+                                                                        #   array.push로 써도 돌아는 간다
             else:
                 self.emit(self.insert_javascript(json_path, dict))
         elif tag=='delete':
-            self.emit(self.delete_javascript(json_path, dict))
+            if isinstance(datum, RelayDatumAsList):
+                self.emit('db.%s.splice(%d, %d);' % (json_path, i1, i2-i1))
+            else:
+                self.emit(self.delete_javascript(json_path, dict))
         elif tag=='replace':
             self.emit(self.insert_javascript(json_path, dict))
         else:

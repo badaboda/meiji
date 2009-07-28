@@ -119,6 +119,56 @@ class KboFeedTest(unittest.TestCase):
         # game_code를 Schedule테이블에는 있되 IE_LiveText 테이블에는 없는 것으로 설정
         self.bootstrap_dict(kbo.ScoreBoard, '20090730HTLT0')
 
+class FeedAsDeltaGeneratorInput(unittest.TestCase):
+    def setUp(self):
+        self.db = feed.SportsDatabase(host='sports-livedb1',
+                            user='root', passwd='damman#2',
+                            db='kbo', charset='utf8',
+                            cursorclass=MySQLdb.cursors.DictCursor)
+        self.game_code ='20090701HHSK0'
+
+        self.consumer = mock.MockJavascriptConsumer()
+        self.delta=feed.DeltaGenerator(self.consumer)
+
+    def testRegistryPlayerProfile(self):
+        d=kbo.RegistryPlayerProfile(self.db, self.game_code)
+        self.delta.feed(d)
+
+        d=kbo.RegistryPlayerProfile(self.db, self.game_code)
+        d.ensure_rows()
+        d.rows[0]['name']='xxx'
+        self.delta.feed(d)
+
+        self.assert_(len(self.consumer.lst) > 0)
+
+    def testAnotherKindFeedShouldNotGenerateDelta(self):
+        d=kbo.RegistryPlayerProfile(self.db, self.game_code)
+        self.delta.feed(d)
+
+        d=kbo.RegistryPlayerBatterSeason(self.db, self.game_code)
+        d.ensure_rows()
+        self.delta.feed(d)
+
+        self.assertEquals(0, len(self.consumer.lst))
+
+    def testAllDatumCouldCallAsDeltaGeneratorInput(self):
+        for klass in kbo.datums+kbo.league_datums+kbo.scoreboard_datums:
+            try:
+                klass(self.db, self.game_code).as_delta_generator_input()
+            except ValueError:
+                raise ValueError('%s does not support as_delta_generator_input' % repr(klass))
+
+class KboDeltaLoopTest(unittest.TestCase):
+    def setUp(self):
+        self.game_code ='20090701HHSK0'
+        self.consumer = mock.MockJavascriptConsumer()
+        self.delta=feed.DeltaGenerator(self.consumer)
+
+    def testDeltaLoop(self):
+        import kbo_delta
+        kbo_delta.loop(self.delta, self.game_code)
+        kbo_delta.loop(self.delta, self.game_code)
+
 if __name__=='__main__':
     unittest.main()
 

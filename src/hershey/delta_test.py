@@ -6,17 +6,6 @@ import mock
 import merge
 import MySQLdb
 
-class DeltaTest(unittest.TestCase):
-    def setUp(self):
-        self.game_code ='20090701HHSK0'
-        self.consumer = mock.MockJavascriptConsumer()
-        self.delta=feed.DeltaGenerator(self.consumer)
-
-    def testDeltaLoop(self):
-        import kbo_delta
-        kbo_delta.loop(self.delta, self.game_code)
-        kbo_delta.loop(self.delta, self.game_code)
-
 class DeltaGeneratorWithLiveTextFromDbTest(unittest.TestCase):
     def setUp(self):
         self.db = feed.SportsDatabase(host='localhost',
@@ -49,8 +38,7 @@ class DeltaGeneratorWithLiveTextFromDbTest(unittest.TestCase):
         self.assertEquals(
             ["db.livetext.push({'inning': 6, 'textstyle': 1, 'text': u'305', 'seq': 305, 'btop': 0});"], self.consumer.lst)
 
-
-class DeltaGeneratorTest(unittest.TestCase):
+class DeltaGeneratorWithKeyedDatumTest(unittest.TestCase):
     def setUp(self):
         self.consumer = mock.MockJavascriptConsumer()
         self.delta=feed.DeltaGenerator(self.consumer)
@@ -74,6 +62,21 @@ class DeltaGeneratorTest(unittest.TestCase):
         self.assertEquals(
             ["db.livetext.push({'a': 2, 'b': 2});"], self.consumer.lst)
 
+    def test_waiting_batters(self):
+        self.delta.feed(mock.MockDatumAsList("waiting_batters", [{ "a": 1, "b": 1 },
+                                                          { "a": 2, "b": 2 },
+                                                          { "a": 3, "b": 3 }]))
+        self.delta.feed(mock.MockDatumAsList("waiting_batters", [{ "a": 2, "b": 2 },
+                                                          { "a": 3, "b": 3 },
+                                                          { "a": 4, "b": 4 }]))
+        self.assertEquals(
+            ["db.waiting_batters.splice(0, 1);", "db.waiting_batters.push({'a': 4, 'b': 4});"], self.consumer.lst)
+
+        #self.assertEquals(
+        #    ["db.waiting_batters=db.waiting_batters.slice(1)+{'a': 4, 'b': 4});", "db.waiting_batters.push({'a': 4, 'b': 4});"], self.consumer.lst)
+
+        #self.assertEquals(
+        #    ["db.waiting_batters=[{'a': 2, 'b': 2}, {'a': 3, 'b': 3}, {'a': 4, 'b': 4}]);"], self.consumer.lst)
 
     def test_delete(self):
         self.delta.feed(mock.MockDatum(self.KEYED_JSON_PATH, [{ "pcode": "79260", "name": "장원삼" },
@@ -91,46 +94,6 @@ class DeltaGeneratorTest(unittest.TestCase):
         self.assertEquals(
             ["db.registry.players['79260'].profile={'pcode': '79260', 'name': %s};"%repr('장원삼2')],
             self.consumer.lst)
-
-
-class FeedAsDeltaGeneratorInput(unittest.TestCase):
-    def setUp(self):
-        self.db = feed.SportsDatabase(host='sports-livedb1',
-                            user='root', passwd='damman#2',
-                            db='kbo', charset='utf8',
-                            cursorclass=MySQLdb.cursors.DictCursor)
-        self.game_code ='20090701HHSK0'
-
-        self.consumer = mock.MockJavascriptConsumer()
-        self.delta=feed.DeltaGenerator(self.consumer)
-
-    def testRegistryPlayerProfile(self):
-        d=kbo.RegistryPlayerProfile(self.db, self.game_code)
-        self.delta.feed(d)
-
-        d=kbo.RegistryPlayerProfile(self.db, self.game_code)
-        d.ensure_rows()
-        d.rows[0]['name']='xxx'
-        self.delta.feed(d)
-
-        self.assert_(len(self.consumer.lst) > 0)
-
-    def testAnotherKindFeedShouldNotGenerateDelta(self):
-        d=kbo.RegistryPlayerProfile(self.db, self.game_code)
-        self.delta.feed(d)
-
-        d=kbo.RegistryPlayerBatterSeason(self.db, self.game_code)
-        d.ensure_rows()
-        self.delta.feed(d)
-
-        self.assertEquals(0, len(self.consumer.lst))
-
-    def testAllDatumCouldCallAsDeltaGeneratorInput(self):
-        for klass in kbo.datums+kbo.league_datums+kbo.scoreboard_datums:
-            try:
-                klass(self.db, self.game_code).as_delta_generator_input()
-            except ValueError:
-                raise ValueError('%s does not support as_delta_generator_input' % repr(klass))
 
 class DictMergeTest(unittest.TestCase):
     def test_merge_insert(self):
