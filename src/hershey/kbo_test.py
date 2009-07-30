@@ -12,9 +12,9 @@ import merge
 
 class UtilTest(unittest.TestCase):
     def test_hierachy_dict(self):
-        d=feed.hierachy_dict(['a', 'b'], {})
-        self.assertEquals(types.DictType, type(d))
-        self.assert_(d.has_key('a'))
+        a_dict = {}
+        d=feed.hierachy_dict(['a', 'b'], a_dict)
+        self.assertEquals(d['a']['b'], a_dict)
 
 class KboFeedTest(unittest.TestCase):
     def setUp(self):
