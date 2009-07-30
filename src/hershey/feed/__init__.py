@@ -2,7 +2,7 @@
 import MySQLdb
 import MySQLdb.cursors
 
-import types, exceptions, sys, datetime
+import types, exceptions, sys, datetime, decimal
 from difflib import SequenceMatcher
 
 def _dict_to_tuple_recursive(dict):
@@ -265,6 +265,8 @@ def mypprint(o, write=write):
         write(str(o).lower())
     elif type(o)==type(None):
         write('null')
+    elif type(o)==decimal.Decimal:
+        write(str(o))
     else:
         raise ValueError(type(o))
 
