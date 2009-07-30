@@ -76,7 +76,7 @@ class NpbFeedTest(unittest.TestCase):
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
         p(self.merge(initial_dicts))
 
-    def testLiveTextAndMeta(self):
+    def testMetaAndGameCode(self):
         klasses = [npb.Meta, npb.GameCode]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
         #p(self.merge(initial_dicts))

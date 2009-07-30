@@ -106,7 +106,7 @@ class KboFeedTest(unittest.TestCase):
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
         #p(self.merge(initial_dicts))
 
-    def testLiveTextAndMeta(self):
+    def testMetaAndGameCode(self):
         klasses = [kbo.Meta, kbo.GameCode]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
         #p(self.merge(initial_dicts))
