@@ -5,6 +5,7 @@ if __name__=='__main__':
         'kbo_test',
         'npb_test',
         'mlb_test',
-        'delta_test'
+        'kl_test',
+        'delta_test',
     ])
     unittest.TextTestRunner(verbosity=2).run(suite)
