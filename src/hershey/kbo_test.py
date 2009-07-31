@@ -82,7 +82,7 @@ class KboFeedTest(unittest.TestCase):
                        (kbo.ScoreBoardWatingBatters, game_code),]
             initial_dicts+=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
-        #p(merged)
+        p(merged)
 
     def testLeague(self):
         initial_dicts=[
@@ -90,7 +90,7 @@ class KboFeedTest(unittest.TestCase):
             self.bootstrap_dict(kbo.LeaguePastVsGames, self.game_code)
         ]
         merged=self.merge(initial_dicts)
-        #p(merged)
+        p(merged)
         self.assertHierachy("league:today_games", merged)
         self.assertHierachy("league:past_vs_games", merged)
         self.assertEquals(3, len(merged['league']['today_games']))

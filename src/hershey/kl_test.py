@@ -12,11 +12,11 @@ import merge
 
 class KlFeedTest(unittest.TestCase):
     def setUp(self):
-        self.db = feed.SportsDatabase(host='sports-livedb1',
+        self.db=feed.SportsDatabase(host='sports-livedb1',
                             user='root', passwd='damman#2',
                             db='kl', charset='utf8',
                             cursorclass=MySQLdb.cursors.DictCursor)
-        self.game_code ='20091114'
+        self.game_code='20091114'
 
     def tearDown(self):
         self.db.close()
@@ -27,7 +27,9 @@ class KlFeedTest(unittest.TestCase):
         return klass(self.db, self.game_code)
 
     def bootstrap_dict(self, klass, *args):
-        return self.new_datum(klass, *args).as_bootstrap_dict()
+        dict = self.new_datum(klass, *args).as_bootstrap_dict()
+        self.assertTrue(type(dict)==types.DictType)
+        return dict
 
     def assertHierachy(self, path, hierachy_dict):
         d=hierachy_dict
@@ -44,33 +46,49 @@ class KlFeedTest(unittest.TestCase):
         self.assertTrue(type(dict["livetext"]) == types.ListType)
 
     def testMetaAndGameCode(self):
-        klasses = [kl.Meta, kl.GameCode]
-        initial_dicts = [self.bootstrap_dict(klass) for klass in klasses]
-        merged = self.merge(initial_dicts)
-        self.assertTrue(type(merged['meta']) == types.DictType, 'meta should be dictionary')
+        klasses=[kl.Meta, kl.GameCode]
+        initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
+        merged=self.merge(initial_dicts)
         self.assertHierachy("meta:live_feed_type_text", merged)
         self.assertEquals(merged["game_code"], self.game_code)
 
     def testRegistryPlayerProfile(self):
         dict = self.bootstrap_dict(kl.RegistryPlayerProfile)
-        p(dict)
-        self.assertTrue(type(dict) == types.DictType)
+        #p(dict)
         self.assertHierachy('registry:player:1997035:profile:backnum', dict)
 
     def testRegistryPlayerSeason(self):
         dict = self.bootstrap_dict(kl.RegistryPlayerSeason)
-        feed.mypprint(dict)
-        self.assertTrue(type(dict) == types.DictType)
-        self.assertHierachy('registry:player:1997035:season',dict)
-  
-    def testRegistryTeamSeason(self):
-        dict = self.bootstrap_dict(kl.RegistryTeamSeason)
-        self.assertTrue(type(dict) == types.DictType)
+        #feed.mypprint(dict)
+        self.assertHierachy('registry:player:1997035:season', dict)
 
-    
+    def testRegistryTeamCup(self):
+        dict = self.bootstrap_dict(kl.RegistryTeamCup)
+        #p(dict)
+        self.assertHierachy('registry:team:K04:cup', dict)
+        self.assertHierachy('registry:team:K04:cup:avg_goal', dict)
+
+    def testRegistryTeamRecentFive(self):
+        dict = self.bootstrap_dict(kl.RegistryTeamRecentFive)
+        #p(dict)
+        self.assertHierachy('registry:team:K01:recent5', dict)
+
+    def testRegistryScoreBoardHome(self):
+        dict = self.bootstrap_dict(kl.RegistryScoreBoardHome)
+        #p(dict)
+        self.assertHierachy('registry:scoreboard:%s:home:tcode' % self.game_code, dict)
+
+    def testRegistryScoreBoardAway(self):
+        dict = self.bootstrap_dict(kl.RegistryScoreBoardAway)
+        #p(dict)
+        self.assertHierachy('registry:scoreboard:%s:away:tcode' % self.game_code, dict)
+
+    def testRegistryScoreBoardGoal(self):
+        dict = self.bootstrap_dict(kl.RegistryScoreBoardGoals)
+        p(dict)
+        self.assertHierachy('registry:scoreboard:goals', dict)
+
 
 if __name__=='__main__':
     unittest.main()
 
-
-    
