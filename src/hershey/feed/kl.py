@@ -14,6 +14,9 @@ class RelayDatum(feed.RelayDatum):
     def meet_seq(self):
         return self.game_code[4:5]
 
+    @property
+    def game_id(self):
+        return self.game_code[5:]
 
 class LiveText(feed.RelayDatumAsList):
     def json_path(self):
@@ -194,7 +197,7 @@ class RegistryScoreBoardMixIn(object):
             select home_team as home_tcode, away_team as away_tcode
             from l_tb_meet_schedule
             where meet_year='%s' and meet_seq='%s' and game_id='%s'
-        """ % (self.meet_year, self.meet_seq, self.game_code[5:]))
+        """ % (self.meet_year, self.meet_seq, self.game_id))
         return rows[0][bhome and 'home_tcode' or 'away_tcode']
 
     def fetch(self):
@@ -214,7 +217,7 @@ class RegistryScoreBoardMixIn(object):
                     sum(pk_y_qty) as `pk`
                 from kl.g_tb_player_rec
                 where meet_year='%s' and meet_seq='%s' and game_id='%s' and team_id='%s'
-        """ % (self.game_code, tcode, self.meet_year, self.meet_seq, self.game_code[5:], tcode))
+        """ % (self.game_code, tcode, self.meet_year, self.meet_seq, self.game_id, tcode))
 
 
 class RegistryScoreBoardHome(RelayDatum, RegistryScoreBoardMixIn):
@@ -235,7 +238,7 @@ class RegistryScoreBoardAway(RelayDatum, RegistryScoreBoardMixIn):
 
 class RegistryScoreBoardGoals(feed.RelayDatumAsList):
     def json_path(self):
-        return "registry:scoreboard:goals"
+        return "registry:scoreboard:%s:goals" % (self.game_code)
 
     def fetch(self):
         return self.db.execute("""
@@ -255,3 +258,29 @@ class RegistryScoreBoardGoals(feed.RelayDatumAsList):
         row=super(feed.RelayDatumAsList, self).postprocess(row)
         row['is_self_goal']=bool(row['is_self_goal'])
         return row
+
+class RegistryScoreBoardStatus(RelayDatum):
+    def json_path(self):
+        return "registry:scoreboard:**game_code:status"
+
+    def fetch(self):
+        return self.db.execute("""
+            SELECT 
+                '%s' as game_code, end_yn as is_end_game, half_type as half, s_e_type as is_end_half
+            FROM kl.g_tb_game_time 
+            WHERE 
+                meet_year='%s' and meet_seq='%s' and game_id='%s'
+            order by s_e_time desc limit 1
+        """ % (self.game_code, self.meet_year, self.meet_seq, self.game_id))
+    
+    def postprocess(self, row):
+        row=super(RelayDatum, self).postprocess(row)
+        if row['is_end_game'].strip().lower() == 'y':
+            row['is_end_game'] = bool(True)
+        elif row['is_end_game'].strip().lower() == 'n':
+            row['is_end_game'] = bool(False)
+        if row['is_end_half'].strip().lower() == 'e':
+            row['is_end_half'] = bool(True)
+        elif row['is_end_half'].strip().lower() == 's':
+            row['is_end_half'] = bool(False)
+        return row;
