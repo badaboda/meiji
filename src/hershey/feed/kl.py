@@ -284,3 +284,21 @@ class RegistryScoreBoardStatus(RelayDatum):
         elif row['is_end_half'].strip().lower() == 's':
             row['is_end_half'] = bool(False)
         return row;
+
+class RegistryScoreBoardShotPosition(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:shot_pos" % (self.game_code)
+
+    def fetch(self):
+        return self.db.execute("""
+            select (select code_name from kl.c_tb_com_code where code_type='48' and com_code=a.goal_place) as goal_place_name
+                ,(select code_name from kl.c_tb_com_code where code_type='48' and com_code=a.ast_place_code) as assist_place_name
+                ,(select code_name from kl.c_tb_com_code where code_type='45' and com_code=a.goal_way) as goal_way_name
+                ,(select code_name from kl.c_tb_com_code where code_type='47' and com_code=a.half_type) as half_type_name
+                ,(select n.player_name from kl.p_tb_player n where n.player_id=a.player_id) as goal_player_name
+                ,(select n.player_name from kl.p_tb_player n where n.player_id=a.ast_player_id) as assist_player_name
+                ,(select z.home_type from kl.g_tb_game_rec z where z.team_id=a.team_id and concat(z.meet_year, z.meet_seq, z.game_id)='%(game_code)s' limit 1) as homeaway
+                ,a.*
+            from kl.g_tb_goal_state a
+            where concat(a.meet_year, a.meet_seq, a.game_id) = '%(game_code)s'
+        """ % {'game_code':self.game_code} )

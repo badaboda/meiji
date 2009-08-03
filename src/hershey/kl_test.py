@@ -90,9 +90,13 @@ class KlFeedTest(unittest.TestCase):
 
     def testRegistryScoreBoardGameStatus(self):
         dict=self.bootstrap_dict(kl.RegistryScoreBoardStatus)
-        p(dict)
+        #p(dict)
         self.assertHierachy('registry:scoreboard:%s:status' % (self.game_code),dict)
-
+    
+    def testRegistryScoreBoardShotPosistion(self):
+        dict=self.bootstrap_dict(kl.RegistryScoreBoardShotPosition)
+        #p(dict)
+        self.assertHierachy('registry:scoreboard:%s:shot_pos' % (self.game_code),dict)
 
     def testRegistryOfCurrentGame(self):
         klasses = [
@@ -102,11 +106,12 @@ class KlFeedTest(unittest.TestCase):
                     kl.RegistryScoreBoardHome, 
                     kl.RegistryScoreBoardAway, 
                     kl.RegistryScoreBoardGoals, 
-                    kl.RegistryScoreBoardStatus
+                    kl.RegistryScoreBoardStatus,
+                    kl.RegistryScoreBoardShotPosition
                     ]
         dicts=[self.bootstrap_dict(klass) for klass in klasses]
         merged=self.merge(dicts)
-        #p(merged)
+        p(merged)
 
 
 if __name__=='__main__':
