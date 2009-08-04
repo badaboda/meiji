@@ -109,7 +109,7 @@ class KboFeedTest(unittest.TestCase):
     def testMetaAndGameCode(self):
         klasses = [kbo.Meta, kbo.GameCode]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
-        #p(self.merge(initial_dicts))
+        p(self.merge(initial_dicts))
 
     def testScoreboardForNoDataInScheduleTable(self):
         self.assertRaises(feed.NoDataFoundForScoreboardError,

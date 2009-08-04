@@ -56,6 +56,10 @@ class GameCode(feed.RelayDatumAsAtom):
 
     def fetch(self):
         return [self.game_code]
+    
+    def as_delta_generator_input(self):
+        self.ensure_rows()
+        return tuple(self.rows)
 
 class RegistryPlayerProfile(RelayDatum):
     def json_path(self):
@@ -298,7 +302,20 @@ class RegistryScoreBoardShotPosition(feed.RelayDatumAsList):
                 ,(select n.player_name from kl.p_tb_player n where n.player_id=a.player_id) as goal_player_name
                 ,(select n.player_name from kl.p_tb_player n where n.player_id=a.ast_player_id) as assist_player_name
                 ,(select z.home_type from kl.g_tb_game_rec z where z.team_id=a.team_id and concat(z.meet_year, z.meet_seq, z.game_id)='%(game_code)s' limit 1) as homeaway
-                ,a.*
             from kl.g_tb_goal_state a
             where concat(a.meet_year, a.meet_seq, a.game_id) = '%(game_code)s'
         """ % {'game_code':self.game_code} )
+
+
+datums = [
+            RegistryPlayerProfile, 
+            RegistryPlayerSeason, 
+            RegistryTeamCup, 
+            RegistryScoreBoardHome, 
+            RegistryScoreBoardAway, 
+            RegistryScoreBoardGoals, 
+            RegistryScoreBoardStatus,
+            RegistryScoreBoardShotPosition,
+            Meta,
+            GameCode
+            ]
