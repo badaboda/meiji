@@ -8,9 +8,8 @@ import MySQLdb
 import feed
 from feed import npb
 import mock
-import merge
 
-class NpbFeedTest(unittest.TestCase):
+class NpbFeedTest(feed.FeedTest):
     def setUp(self):
         self.db = feed.SportsDatabase(host='sports-livedb1',
                             user='root', passwd='damman#2',
@@ -21,27 +20,6 @@ class NpbFeedTest(unittest.TestCase):
     def tearDown(self):
         self.db.close()
 
-    def new_datum(self, klass, *args):
-        if args:
-            return klass(self.db, *args)
-        return klass(self.db, self.game_code)
-
-    def bootstrap_dict(self, klass, *args):
-        datum = self.new_datum(klass, *args)
-        d=datum.as_bootstrap_dict()
-        if type(datum.rows[0]) == type({}):
-            assert not datum.rows[0].has_key('inputtime'), "%s spit inputtime" % klass
-            assert not datum.rows[0].has_key('INPUTTIME'), "%s spit inputtime" % klass
-        return d
-
-    def assertHierachy(self, path, hierachy_dict):
-        d=hierachy_dict
-        for k in path.split(':'):
-            self.assertTrue(d.has_key(unicode(k)), 'key(%s) not found in dict(%s)' % (k, repr(d)))
-            d=d[k]
-
-    def merge(self, dicts):
-        return reduce(lambda x,y: merge._merge_insert(x, y), dicts)
 
     def testRegistryPlayerProfile(self):
         self.assertHierachy('registry:player:700014:profile',

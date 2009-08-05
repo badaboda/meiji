@@ -8,9 +8,8 @@ from pprint import pprint as p
 import feed
 from feed import kl
 import mock
-import merge
 
-class KlFeedTest(unittest.TestCase):
+class KlFeedTest(feed.FeedTest):
     def setUp(self):
         self.db=feed.SportsDatabase(host='sports-livedb1',
                             user='root', passwd='damman#2',
@@ -21,24 +20,6 @@ class KlFeedTest(unittest.TestCase):
     def tearDown(self):
         self.db.close()
 
-    def new_datum(self, klass, *args):
-        if args:
-            return klass(self.db, *args)
-        return klass(self.db, self.game_code)
-
-    def bootstrap_dict(self, klass, *args):
-        dict = self.new_datum(klass, *args).as_bootstrap_dict()
-        self.assertTrue(type(dict)==types.DictType)
-        return dict
-
-    def assertHierachy(self, path, hierachy_dict):
-        d=hierachy_dict
-        for k in path.split(':'):
-            self.assertTrue(d.has_key(unicode(k)), 'key(%s) not found in dict(%s)' % (k, repr(d)))
-            d=d[k]
-
-    def merge(self, dicts):
-        return reduce(lambda x,y: merge._merge_insert(x, y), dicts)
 
     def testLiveText(self):
         dict=self.bootstrap_dict(kl.LiveText)
