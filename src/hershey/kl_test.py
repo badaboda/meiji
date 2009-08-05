@@ -9,7 +9,9 @@ import feed
 from feed import kl
 import mock
 
-class KlFeedTest(feed.FeedTest):
+from all_test import FeedTest
+
+class KlFeedTest(FeedTest):
     def setUp(self):
         self.db=feed.SportsDatabase(host='sports-livedb1',
                             user='root', passwd='damman#2',

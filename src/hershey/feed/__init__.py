@@ -1,7 +1,6 @@
 # vim: et sts=4 sw=4 ts=4 ai fileencoding=utf8 :
 import MySQLdb
 import MySQLdb.cursors
-import unittest
 import merge
 
 import types, exceptions, sys, datetime, decimal
@@ -272,22 +271,16 @@ def mypprint(o, write=write):
     else:
         raise ValueError(type(o))
 
-class FeedTest(unittest.TestCase):
-    def new_datum(self, klass, *args):
-        if args:
-            return klass(self.db, *args)
-        return klass(self.db, self.game_code)
+def dump_keynames(dict):
+    import StringIO
+    f=StringIO.StringIO()
+    __dump_keynames(dict, [], f)
+    return f.getvalue()
 
-    def bootstrap_dict(self, klass, *args):
-        dict = self.new_datum(klass, *args).as_bootstrap_dict()
-        self.assertTrue(type(dict)==types.DictType)
-        return dict
+def __dump_keynames(dict, paths, f):
+    for k in sorted(dict.keys()):
+        v=dict[k]
+        f.write(':'.join(paths+[k]) + "\n")
+        if type(v)==type({}):
+            __dump_keynames(dict[k], paths+[k], f)
 
-    def assertHierachy(self, path, hierachy_dict):
-        d=hierachy_dict
-        for k in path.split(':'):
-            self.assertTrue(d.has_key(unicode(k)), 'key(%s) not found in dict(%s)' % (k, repr(d)))
-            d=d[k]
-
-    def merge(self, dicts):
-        return reduce(lambda x,y: merge._merge_insert(x, y), dicts)

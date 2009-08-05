@@ -9,13 +9,25 @@ import feed
 from feed import kbo
 import mock
 
+from all_test import FeedTest
+
 class UtilTest(unittest.TestCase):
     def test_hierachy_dict(self):
         a_dict = {}
         d=feed.hierachy_dict(['a', 'b'], a_dict)
         self.assertEquals(d['a']['b'], a_dict)
 
-class KboFeedTest(feed.FeedTest):
+    def test_dump_keynames(self):
+        a_dict = { 'a': { 'b': 0, 'c': { 'd': 'string' }}}
+        self.assertEquals(
+"""a
+a:b
+a:c
+a:c:d
+"""
+        , feed.dump_keynames(a_dict))
+
+class KboFeedTest(FeedTest):
     def setUp(self):
         self.db = feed.SportsDatabase(host='sports-livedb1',
                             user='root', passwd='damman#2',

@@ -6,37 +6,6 @@ import mock
 import merge
 import MySQLdb
 
-class DeltaGeneratorWithLiveTextFromDbTest(unittest.TestCase):
-    def setUp(self):
-        self.db = feed.SportsDatabase(host='localhost',
-                            user='root', passwd='',
-                            db='kbo_test', charset='utf8',
-                            cursorclass=MySQLdb.cursors.DictCursor)
-        self.game_code ='20090701HHSK0'
-        self.consumer = mock.MockJavascriptConsumer()
-        self.delta=feed.DeltaGenerator(self.consumer)
-
-    def tearDown(self):
-        self.db.close()
-
-    def testLiveText(self):
-        params={ 'game_code': self.game_code, 'seq': 305 }
-        self.db.execute("""
-            delete from IE_LiveText where gameid = '%(game_code)s'  AND SeqNO = %(seq)d;
-        """ % params)
-
-        datum=kbo.LiveText(self.db, self.game_code)
-        self.delta.feed(datum)
-
-        self.db.execute("""
-            insert IE_LiveText (gameID, LiveText, SeqNO, Inning, bTop, textStyle) values('%(game_code)s','%(seq)d',%(seq)d,6,0,1);
-        """ % params)
-
-        datum=kbo.LiveText(self.db, self.game_code)
-        self.delta.feed(datum)
-
-        self.assertEquals(
-            ["db.livetext.push({'inning': 6, 'textstyle': 1, 'text': u'305', 'seq': 305, 'btop': 0});"], self.consumer.lst)
 
 class DeltaGeneratorWithKeyedDatumTest(unittest.TestCase):
     def setUp(self):
