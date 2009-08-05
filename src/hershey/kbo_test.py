@@ -27,7 +27,7 @@ a:c:d
 """
         , feed.dump_keynames(a_dict))
 
-class KboFeedTest(FeedTest):
+class KboFeedTest(feed.FeedTest):
     def setUp(self):
         self.db = feed.SportsDatabase(host='sports-livedb1',
                             user='root', passwd='damman#2',

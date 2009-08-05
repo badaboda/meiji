@@ -280,7 +280,7 @@ def dump_keynames(dict):
 def __dump_keynames(dict, paths, f):
     for k in sorted(dict.keys()):
         v=dict[k]
-        f.write(':'.join(paths+[k]) + "\n")
+        f.write(':'.join(paths+[str(k)]) + "\n")
         if type(v)==type({}):
-            __dump_keynames(dict[k], paths+[k], f)
+            __dump_keynames(dict[k], paths+[str(k)], f)
 
