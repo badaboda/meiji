@@ -1,2 +1,4 @@
 meiji
 *.json
+Session.vim
+*.tmp

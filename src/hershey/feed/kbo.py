@@ -173,6 +173,12 @@ class RegistryTeamSeason(feed.RelayDatum):
                 """ % (self.game_code))
         return rows
 
+    def postprocess(self, row):
+        row=super(RegistryTeamSeason, self).postprocess(row)
+        for name_to_remove in ['inn', 'inn2']:
+            del row[name_to_remove]
+        return row
+
 class RegistryTeamProfile(feed.RelayDatum):
     def json_path(self):
         return u"registry:team:**tcode:profile"

@@ -4,15 +4,7 @@ import sys, pprint
 import merge,feed
 from feed import kbo
 
-
-if __name__=='__main__':
-    game_code ='20090701HHSK0'
-
-    db = feed.SportsDatabase(host='sports-livedb1',
-                        user='root', passwd='damman#2',
-                        db='kbo', charset='utf8',
-                        cursorclass=MySQLdb.cursors.DictCursor)
-
+def kbo_bootstrap_dict(db, game_code):
     bootstrap_dicts=[]
     for klass in kbo.datums:
         datum=klass(db, game_code)
@@ -30,5 +22,13 @@ if __name__=='__main__':
             bootstrap_dicts.append(klass(db, c).as_bootstrap_dict())
 
     merged=reduce(lambda x,y: merge._merge_insert(x, y), bootstrap_dicts)
-    feed.mypprint(merged)
+    return merged
 
+if __name__=='__main__':
+    game_code ='20090701HHSK0'
+    db = feed.SportsDatabase(host='sports-livedb1',
+                        user='root', passwd='damman#2',
+                        db='kbo', charset='utf8',
+                        cursorclass=MySQLdb.cursors.DictCursor)
+    merged=kbo_bootstrap_dict(db, game_code)
+    feed.mypprint(merged)
