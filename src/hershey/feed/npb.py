@@ -80,6 +80,13 @@ class RegistryPlayerBatterSeason(feed.RelayDatum):
                 """ % self.game_code)
         return rows
 
+    def postprocess(self, row):
+        row=super(RegistryPlayerBatterSeason, self).postprocess(row)
+        for delete_key in ['game_flag', 'pa_flag']:
+            del row[delete_key]
+        return row
+
+
 class RegistryPlayerBatterToday(feed.RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:batter:today"
@@ -109,11 +116,9 @@ class RegistryPlayerPitcherToday(feed.RelayDatum):
                             pr.Inning         AS ip,
                             pr.Run            AS r,
                             pr.ER             AS er,
-                            pr.Hit            AS h,
+                            pr.Hit            AS hit,
                             pr.SO             AS so,
-                            pr.PitchBallCnt   AS s,
-                            pr.PitStrikeCnt AS b,
-                            (pr.PitchBallCnt + pr.PitStrikeCnt) AS np
+                            pr.PitchBallCnt   AS np
                     FROM PITCHERRECORD pr
                     WHERE pr.gmkey = '%s'
                 """ % self.game_code)

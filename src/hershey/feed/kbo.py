@@ -91,6 +91,15 @@ class RegistryPlayerBatterSeason(feed.RelayDatum):
                 """ % self.game_code)
         return rows
 
+    def postprocess(self, row):
+        row=super(RegistryPlayerBatterSeason, self).postprocess(row)
+        row['bbhp']=row['bb'] + row['hp']
+        row['shf']=row['sh'] + row['sf']
+        row['game']=row['gamenum']
+        for delete_key in ['bb', 'hp', 'sh', 'sf', 'err', 'tb', 'gamenum', 'score']:
+            del row[delete_key]
+        return row
+
 class RegistryPlayerBatterToday(feed.RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:batter:today"
@@ -120,11 +129,11 @@ class RegistryPlayerPitcherToday(feed.RelayDatum):
                             pr.Inning         AS ip,
                             pr.Run            AS r,
                             pr.ER             AS er,
-                            pr.Hit            AS h,
+                            pr.Hit            AS hit,
                             pr.SO             AS so,
-                            pr.PitchBallCnt   AS s,
-                            pr.PitchStrikeCnt AS b,
-                            (pr.PitchBallCnt + pr.PitchStrikeCnt) AS np
+                            (pr.PitchBallCnt + pr.PitchStrikeCnt) AS np,
+                            pr.PitchBallCnt   AS b,
+                            pr.PitchStrikeCnt AS s
                     FROM IE_PitcherRecord pr
                     WHERE pr.gameID = '%s'
                 """ % self.game_code)

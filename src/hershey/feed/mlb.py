@@ -98,11 +98,11 @@ class RegistryPlayerPitcherToday(feed.RelayDatum):
                             pr.Inning         AS ip,
                             pr.Run            AS r,
                             pr.ER             AS er,
-                            pr.Hit            AS h,
+                            pr.Hit            AS hit,
                             pr.SO             AS so,
-                            pr.PitchBallCnt   AS s,
-                            pr.PitchStrikeCnt AS b,
-                            (pr.PitchBallCnt + pr.PitchStrikeCnt) AS np
+                            pr.PitchBallCnt   AS np,
+                            pr.PitchStrikeCnt AS s,
+                            (pr.PitchBallCnt - pr.PitchStrikeCnt) AS b
                     FROM MLB_PitcherRecord pr
                     WHERE pr.gameID = '%s'
                 """ % self.game_code)

@@ -43,8 +43,19 @@ class KboFeedTest(feed.FeedTest):
                              self.bootstrap_dict(kbo.RegistryPlayerProfile))
 
     def testRegistryPlayerSeason(self):
-        self.assertHierachy('registry:player:72139:batter:season',
-                            self.bootstrap_dict(kbo.RegistryPlayerBatterSeason))
+        d=self.bootstrap_dict(kbo.RegistryPlayerBatterSeason)
+        self.assertHierachy('registry:player:72139:batter:season', d)
+        self.assertHierachy('registry:player:72139:batter:season:bbhp', d)
+
+        season_dict=d['registry']['player']['72139']['batter']['season']
+        self.assertFalse(season_dict.has_key('bb'))
+        self.assertFalse(season_dict.has_key('hp'))
+        self.assertFalse(season_dict.has_key('sf'))
+        self.assertFalse(season_dict.has_key('sh'))
+        self.assertFalse(season_dict.has_key('err'))
+        self.assertFalse(season_dict.has_key('gamenum'))
+        self.assertHierachy('registry:player:72139:batter:season:bbhp', d)
+        self.assertHierachy('registry:player:72139:batter:season:shf', d)
 
     def testScoreBoardForCurrentGame(self):
         code=self.game_code

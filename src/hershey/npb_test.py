@@ -28,8 +28,13 @@ class NpbFeedTest(FeedTest):
                              self.bootstrap_dict(npb.RegistryPlayerProfile))
 
     def testRegistryPlayerSeason(self):
-        self.assertHierachy('registry:player:11983:batter:season',
-                            self.bootstrap_dict(npb.RegistryPlayerBatterSeason))
+        d=self.bootstrap_dict(npb.RegistryPlayerBatterSeason)
+        self.assertHierachy('registry:player:11983:batter:season', d)
+
+        season_dict=d['registry']['player']['11983']['batter']['season']
+        self.assertFalse(season_dict.has_key('game_flag'))
+        self.assertFalse(season_dict.has_key('pa_flag'))
+
 
     def testScoreBoardForCurrentGame(self):
         code=self.game_code
