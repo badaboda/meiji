@@ -151,8 +151,7 @@ class RegistryTeamSeason(feed.RelayDatum):
 
     def fetch(self):
         rows=self.db.execute("""
-                    select (select home_key from SCHEDULE where home = tr.team order by GYEAR limit 1) as tcode,
-                            tr.*
+                    select tr.team as tcode, tr.*
                     from TEAMRANK tr
                     where substring('%s',1,4) = tr.GYEAR
                 """ % (self.game_code))

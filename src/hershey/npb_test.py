@@ -50,6 +50,10 @@ class NpbFeedTest(FeedTest):
         self.assertHierachy("registry:scoreboard:%s:away" % code, merged)
         self.assertHierachy("registry:scoreboard:%s:waiting_batters" % code, merged)
 
+    def testRegistryTeamSeason(self):
+        dict=self.bootstrap_dict(npb.RegistryTeamSeason, self.game_code)
+        self.assertFalse(dict['registry']['team'].has_key(None))
+
     def testRegistryPlayer(self):
         klasses = [npb.RegistryPlayerProfile,
                     npb.RegistryPlayerBatterSeason,
