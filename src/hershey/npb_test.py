@@ -63,12 +63,39 @@ class NpbFeedTest(FeedTest):
                     npb.RegistryTeamSeason,
                     npb.RegistryTeamProfile, ]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
-        p(self.merge(initial_dicts))
+        #p(self.merge(initial_dicts))
 
     def testMetaAndGameCode(self):
         klasses = [npb.Meta, npb.GameCode]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
         #p(self.merge(initial_dicts))
+
+    def testScoreBoardHomeLineupBatter(self):
+        dict=self.bootstrap_dict(npb.ScoreBoardHomeLineupBatter, self.game_code)
+        json_path="registry:scoreboard:%s:home:lineup:batter" % self.game_code
+        self.assertHierachy(json_path, dict)
+        #p(dict)
+        self.assertEquals("600052", self.fetchHierachy(json_path, dict)[0]['pcode'])
+
+    def testScoreBoardAwayLineupBatter(self):
+        dict=self.bootstrap_dict(npb.ScoreBoardAwayLineupBatter, self.game_code)
+        json_path="registry:scoreboard:%s:away:lineup:batter" % self.game_code
+        self.assertHierachy(json_path, dict)
+        self.assertEquals("11983", self.fetchHierachy(json_path, dict)[0]['pcode'])
+
+    def testScoreBoardHomeLineupPitcher(self):
+        dict=self.bootstrap_dict(npb.ScoreBoardHomeLineupPitcher, self.game_code)
+        json_path="registry:scoreboard:%s:home:lineup:pitcher" % self.game_code
+        self.assertHierachy(json_path, dict)
+        p(dict)
+        self.assertEquals("600051", self.fetchHierachy(json_path, dict)[0]['pcode'])
+
+    def testScoreBoardAwayLineupPitcher(self):
+        dict=self.bootstrap_dict(npb.ScoreBoardAwayLineupPitcher, self.game_code)
+        json_path="registry:scoreboard:%s:away:lineup:pitcher" % self.game_code
+        self.assertHierachy(json_path, dict)
+        p(dict)
+        self.assertEquals("12103", self.fetchHierachy(json_path, dict)[0]['pcode'])
 
 if __name__=='__main__':
     unittest.main()

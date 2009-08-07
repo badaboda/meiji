@@ -14,11 +14,15 @@ class FeedTest(unittest.TestCase):
         self.assertTrue(type(dict)==types.DictType)
         return dict
 
-    def assertHierachy(self, path, hierachy_dict):
+    def fetchHierachy(self, path, hierachy_dict):
         d=hierachy_dict
         for k in path.split(':'):
             self.assertTrue(d.has_key(unicode(k)), 'key(%s) not found in dict(%s)' % (k, repr(d)))
             d=d[k]
+        return d
+
+    def assertHierachy(self, path, hierachy_dict):
+        self.fetchHierachy(path, hierachy_dict)
 
     def merge(self, dicts):
         return reduce(lambda x,y: merge._merge_insert(x, y), dicts)

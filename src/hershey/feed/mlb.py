@@ -24,9 +24,8 @@ class RegistryPlayerProfile(feed.RelayDatum):
                     SELECT
                         p.PlayerID as pcode,
                         p.name as name,
-                        br.PositionName as position,
-                        br.position as position_code,
-                        p.bat as hittype,
+                        p.bat as bat,
+                        p.throw as throw,
                         p.weight as weight,
                         p.height as height
                     FROM MLB_BatterRecord br, MLB_Person p
@@ -37,7 +36,8 @@ class RegistryPlayerProfile(feed.RelayDatum):
                     SELECT
                         p.PlayerID as pcode,
                         p.name as name,
-                        p.bat as hittype,
+                        p.bat as bat,
+                        p.throw as throw,
                         p.weight as weight,
                         p.height as height
                     FROM MLB_PitcherRecord pr, MLB_Person p
@@ -66,7 +66,11 @@ class RegistryPlayerBatterSeason(feed.RelayDatum):
 
     def postprocess(self, row):
         row=super(RegistryPlayerBatterSeason, self).postprocess(row)
-        del row['teamcode']
+        row['bbhp']=row['bb'] + row['hp']
+        row['shf']=row['sh'] + row['sf']
+        row['run']=row['r']
+        for delete_key in ['r', 'bb', 'hp', 'sh', 'sf', 'teamcode', 'inputtime', 'gp', 'pa', 'playerid', 'savg', 'year']:
+            del row[delete_key]
         return row
 
 class RegistryPlayerBatterToday(feed.RelayDatum):
@@ -79,7 +83,7 @@ class RegistryPlayerBatterToday(feed.RelayDatum):
                             br.OAB        AS ab,
                             (br.H1+ br.H2 + br.H3 + br.HR)     AS h,
                             br.HR     AS hr,
-                            br.BB     AS bb,
+                            (br.BB+br.HBP)     AS bbhp,
                             br.RBI     AS rbi,
                             br.SO     AS so,
                             br.Run     AS r
@@ -118,12 +122,12 @@ class RegistryPlayerPitcherSeason(feed.RelayDatum):
         rows=self.db.execute("""
                     SELECT
                         pt.playerID as pcode,
-                        pt.W,
-                        pt.L,
+                        pt.W as win,
+                        pt.L as lose,
                         pt.HIT,
                         pt.HR,
                         pt.KK,
-                        pt.S
+                        pt.S as save
                     FROM MLB_PitcherRecord pr, MLB_PitTotalAll pt
                     WHERE pr.gameID = '%s'
                         AND pt.PlayerID = pr.PlayerID
@@ -137,15 +141,34 @@ class RegistryTeamSeason(feed.RelayDatum):
 
     def fetch(self):
         rows=self.db.execute("""
-            select c.team_code as tcode, c.team_name as team, (a.won+a.lost) as gameplayed, a.won, a.lost, a.percentage,
-                 a.games_behind, b.last10wins, b.last10losses
-                 from mlb.MLB_STANDINGS a, mlb.MLB_STANDINGEX b, mlb.MLB_Teams c
-                 where a.enddate = b.enddate and a.teamcode = b.teamcode
-                 and a.teamcode = c.tickername
-                 and a.enddate = (select max(enddate) as lastdate from mlb.MLB_STANDINGS)
-                        order by a.percentage desc, a.won desc
+            SELECT 
+                c.team_code as tcode, 
+                c.team_name as team, 
+                (a.won+a.lost) as gameplayed, 
+                a.won, 
+                a.lost, 
+                a.percentage,
+                a.games_behind, 
+                b.last10wins, 
+                b.last10losses
+            FROM mlb.MLB_STANDINGS a, mlb.MLB_STANDINGEX b, mlb.MLB_Teams c
+            WHERE 
+                a.enddate = b.enddate and a.teamcode = b.teamcode
+                and a.teamcode = c.tickername
+                and a.enddate = (select max(enddate) as lastdate from mlb.MLB_STANDINGS)
+            ORDER BY a.percentage desc, a.won desc
         """)
         return rows
+
+    def postprocess(self, row):
+        row=super(RegistryTeamSeason, self).postprocess(row)
+        row['game']=row['gameplayed']
+        row['gb']=row['games_behind']
+        row['win']=row['won']
+        row['lose']=row['lost']
+        for name_to_remove in ['gameplayed', 'games_behind', 'won', 'lost']:
+            del row[name_to_remove]
+        return row
 
 class RegistryTeamProfile(feed.RelayDatum):
     def json_path(self):
@@ -318,7 +341,7 @@ class ScoreBoardBases(feed.RelayDatum):
             raise feed.NoDataFoundForScoreboardError(self.game_code, 'MLB_BallCount')
         row = rows[0]
 
-        current_batter_list = fetch_current_batter_list(self.db, self.game_code)
+        current_batter_list = fetch_current_offense_batter_list(self.db, self.game_code)
         for k in ['base1', 'base2', 'base3']:
             row[k]=self.find_pcode_of_batorder(row[k], current_batter_list)
         return rows
@@ -328,7 +351,7 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
         return u"registry:scoreboard:%s:waiting_batters" % self.game_code
 
     def fetch(self):
-        current_batter_list=fetch_current_batter_list(self.db, self.game_code)
+        current_batter_list=fetch_current_offense_batter_list(self.db, self.game_code)
         batorder=self.current_batorder(current_batter_list)
 
         from itertools import chain, islice
@@ -403,6 +426,33 @@ class LeaguePastVsGames(feed.RelayDatumAsList):
         self.ensure_rows()
         return tuple(self.rows)
 
+class ScoreBoardHomeLineupBatter(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:home:lineup:batter" % self.game_code
+
+    def fetch(self):
+        return fetch_batter_list_of(self.db, self.game_code, 1)
+
+class ScoreBoardAwayLineupBatter(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:away:lineup:batter" % self.game_code
+
+    def fetch(self):
+        return fetch_batter_list_of(self.db, self.game_code, 0)
+
+class ScoreBoardHomeLineupPitcher(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:home:lineup:pitcher" % self.game_code
+
+    def fetch(self):
+        return fetch_pitcher_list_of(self.db, self.game_code, 1)
+
+class ScoreBoardAwayLineupPitcher(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:away:lineup:pitcher" % self.game_code
+
+    def fetch(self):
+        return fetch_pitcher_list_of(self.db, self.game_code, 0)
 
 # ----------
 
@@ -427,16 +477,20 @@ def current_btop(db, game_code):
         raise feed.NoDataFoundForScoreboardError(game_code, 'MLB_LiveText')
     return int(rows[0]['btop'])
 
-def fetch_current_batter_list(db, game_code):
+def fetch_current_offense_batter_list(db, game_code):
     btop=current_btop(db, game_code)
     assert btop in [0, 1], "btop |%d|" % btop
     bhome=((btop==0) and 1) or 0
 
+    return fetch_batter_list_of(db, game_code, bhome)
+
+
+def fetch_batter_list_of(db, game_code, bhome):
     lineup_sql="""
         SELECT br.bhome as home,
                br.playerID as pcode,
                br.BatOrder as batorder,
-               br.position as position_code
+               br.positionName as position
         FROM MLB_BatterRecord br
         INNER JOIN
             MLB_Person p
@@ -461,5 +515,19 @@ def fetch_current_batter_list(db, game_code):
     for b in current_batter_list:
         del b['is_in_batter_list']
     return current_batter_list
+
+def fetch_pitcher_list_of(db, game_code, bhome):
+    lineup_sql = """
+        SELECT
+            playerID as pcode,
+            seqNo as seq
+        FROM
+            MLB_PitcherRecord
+        WHERE
+            gameID ='%s' and bhome='%d'
+        ORDER BY
+            seqNo desc
+    """
+    return db.execute(lineup_sql % (game_code, bhome))
 
 # ----------

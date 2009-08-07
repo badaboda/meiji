@@ -66,6 +66,13 @@ class RegistryPlayerProfile(feed.RelayDatum):
         rows=batter_rows+pitcher_rows
         return rows
 
+    def postprocess(self, row):
+        row=super(RegistryPlayerProfile, self).postprocess(row)
+        #print row['pos']
+        for delete_key in ['gyear', 'pos', 'p_flag']:
+            del row[delete_key]
+        return row
+
 class RegistryPlayerBatterSeason(feed.RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:batter:season"
@@ -82,7 +89,8 @@ class RegistryPlayerBatterSeason(feed.RelayDatum):
 
     def postprocess(self, row):
         row=super(RegistryPlayerBatterSeason, self).postprocess(row)
-        for delete_key in ['game_flag', 'pa_flag']:
+        row['avg']=row['hra']
+        for delete_key in ['game_flag', 'pa_flag', 'gyear', 'hra']:
             del row[delete_key]
         return row
 
@@ -137,7 +145,7 @@ class RegistryPlayerPitcherSeason(feed.RelayDatum):
                         pt.HIT as hit,
                         pt.HR as hr,
                         pt.KK as kk,
-                        pt.SV as sv
+                        pt.SV as save
                     FROM PITCHERRECORD pr, PITCHER_P pt
                     WHERE pr.gmkey = '%s'
                         AND pt.PCODE = pr.PlayerID
@@ -323,7 +331,7 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
         return u"registry:scoreboard:%s:waiting_batters" % self.game_code
 
     def fetch(self):
-        current_batter_list=fetch_current_batter_list(self.db, self.game_code)
+        current_batter_list=fetch_current_offense_batter_list(self.db, self.game_code)
         batorder=self.current_batorder(current_batter_list)
 
         from itertools import chain, islice
@@ -350,6 +358,34 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
         else:
             raise ValueError('pcode not found in current_batter_list: %s' % pcode)
 
+class ScoreBoardHomeLineupBatter(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:home:lineup:batter" % self.game_code
+
+    def fetch(self):
+        return fetch_batter_list_of(self.db, self.game_code, 1)
+
+class ScoreBoardAwayLineupBatter(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:away:lineup:batter" % self.game_code
+
+    def fetch(self):
+        return fetch_batter_list_of(self.db, self.game_code, 0)
+
+class ScoreBoardHomeLineupPitcher(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:home:lineup:pitcher" % self.game_code
+
+    def fetch(self):
+        return fetch_pitcher_list_of(self.db, self.game_code, 1)
+
+class ScoreBoardAwayLineupPitcher(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:away:lineup:pitcher" % self.game_code
+
+    def fetch(self):
+        return fetch_pitcher_list_of(self.db, self.game_code, 0)
+
 # ----------
 
 def current_btop(db, game_code):
@@ -373,16 +409,18 @@ def current_btop(db, game_code):
         raise feed.NoDataFoundForScoreboardError(self.game_code, "LIVETEXT")
     return rows[0]['btop']
 
-def fetch_current_batter_list(db, game_code):
+def fetch_current_offense_batter_list(db, game_code):
     btop=current_btop(db, game_code)
     assert btop in [0, 1], "btop |%d|" % btop
     bhome=((btop==0) and 1) or 0
+    return fetch_batter_list_of(db, game_code, bhome)
 
+def fetch_batter_list_of(db, game_code, bhome):
     lineup_sql="""
         SELECT br.bhome as home,
                br.playerID as pcode,
                br.BatOrder as batorder,
-               br.pos as position_code
+               br.posname as position
         FROM BATTERRECORD br
         INNER JOIN
             PERSON p
@@ -407,6 +445,20 @@ def fetch_current_batter_list(db, game_code):
     for b in current_batter_list:
         del b['is_in_batter_list']
     return current_batter_list
+
+def fetch_pitcher_list_of(db, game_code, bhome):
+    lineup_sql = """
+        SELECT
+            PLAYERID as pcode,
+            SEQNO as seq
+        FROM
+            PITCHERRECORD
+        WHERE
+            GMKEY ='%s' and BHOME='%d'
+        ORDER BY
+            SEQNO desc
+    """
+    return db.execute(lineup_sql % (game_code, bhome))
 
 # ----------
 

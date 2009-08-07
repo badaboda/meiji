@@ -59,6 +59,7 @@ class KboFeedTest(FeedTest):
         self.assertFalse(season_dict.has_key('gamenum'))
         self.assertHierachy('registry:player:72139:batter:season:bbhp', d)
         self.assertHierachy('registry:player:72139:batter:season:shf', d)
+        self.assertEquals('HH', season_dict['tcode'])
 
     def testScoreBoardForCurrentGame(self):
         code=self.game_code
@@ -90,7 +91,7 @@ class KboFeedTest(FeedTest):
                        (kbo.ScoreBoardWatingBatters, game_code),]
             initial_dicts+=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
-        p(merged)
+        #p(merged)
 
     def testLeague(self):
         initial_dicts=[
@@ -98,7 +99,7 @@ class KboFeedTest(FeedTest):
             self.bootstrap_dict(kbo.LeaguePastVsGames, self.game_code)
         ]
         merged=self.merge(initial_dicts)
-        p(merged)
+        #p(merged)
         self.assertHierachy("league:today_games", merged)
         self.assertHierachy("league:past_vs_games", merged)
         self.assertEquals(3, len(merged['league']['today_games']))
@@ -117,7 +118,7 @@ class KboFeedTest(FeedTest):
     def testMetaAndGameCode(self):
         klasses = [kbo.Meta, kbo.GameCode]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
-        p(self.merge(initial_dicts))
+        #p(self.merge(initial_dicts))
 
     def testScoreboardForNoDataInScheduleTable(self):
         self.assertRaises(feed.NoDataFoundForScoreboardError,
@@ -126,6 +127,31 @@ class KboFeedTest(FeedTest):
     def testScoreboardForNoDataInScheduleTable(self):
         # game_code를 Schedule테이블에는 있되 IE_LiveText 테이블에는 없는 것으로 설정
         self.bootstrap_dict(kbo.ScoreBoard, '20090730HTLT0')
+
+    def testScoreBoardHomeLineupBatter(self):
+        dict=self.bootstrap_dict(kbo.ScoreBoardHomeLineupBatter, self.game_code)
+        json_path="registry:scoreboard:%s:home:lineup:batter" % self.game_code
+        self.assertHierachy(json_path, dict)
+        self.assertEquals("77609", self.fetchHierachy(json_path, dict)[0]['pcode'])
+
+    def testScoreBoardAwayLineupBatter(self):
+        dict=self.bootstrap_dict(kbo.ScoreBoardAwayLineupBatter, self.game_code)
+        json_path="registry:scoreboard:%s:away:lineup:batter" % self.game_code
+        self.assertHierachy(json_path, dict)
+        self.assertEquals("72139", self.fetchHierachy(json_path, dict)[0]['pcode'])
+
+    def testScoreBoardHomeLineupPitcher(self):
+        dict=self.bootstrap_dict(kbo.ScoreBoardHomeLineupPitcher, self.game_code)
+        json_path="registry:scoreboard:%s:home:lineup:pitcher" % self.game_code
+        self.assertHierachy(json_path, dict)
+        self.assertEquals("74857", self.fetchHierachy(json_path, dict)[0]['pcode'])
+
+    def testScoreBoardAwayLineupPitcher(self):
+        dict=self.bootstrap_dict(kbo.ScoreBoardAwayLineupPitcher, self.game_code)
+        json_path="registry:scoreboard:%s:away:lineup:pitcher" % self.game_code
+        self.assertHierachy(json_path, dict)
+        self.assertEquals("93715", self.fetchHierachy(json_path, dict)[0]['pcode'])
+
 
 class FeedAsDeltaGeneratorInput(unittest.TestCase):
     def setUp(self):

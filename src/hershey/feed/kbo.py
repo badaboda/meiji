@@ -56,7 +56,6 @@ class RegistryPlayerProfile(feed.RelayDatum):
             p.pcode as pcode,
             p.name as name,
             p.backnum as backnum,
-            p.position as position,
             p.hittype as hittype,
             p.weight as weight,
             p.height as height
@@ -77,13 +76,33 @@ class RegistryPlayerProfile(feed.RelayDatum):
         rows=batter_rows+pitcher_rows
         return rows
 
+    def postprocess(self, row):
+        rl_han_to_eng = {
+            u'우': 'R',
+            u'좌': 'L',
+            u'양': 'S',
+        }
+
+        row=super(RegistryPlayerProfile, self).postprocess(row)
+        hittype=row['hittype']
+        m=re.match(u'(.).(.)타', hittype)
+        assert m!=None
+        assert (m.group(2) in rl_han_to_eng.keys())
+        row['bat']=rl_han_to_eng[m.group(2)]
+        row['throw']=rl_han_to_eng[m.group(1)]
+        for delete_key in ['hittype']:
+            del row[delete_key]
+        return row
+
 class RegistryPlayerBatterSeason(feed.RelayDatum):
     def json_path(self):
         return u"registry:player:**pcode:batter:season"
 
     def fetch(self):
         rows=self.db.execute("""
-                    SELECT b.*
+                    SELECT 
+                        b.*,
+                        (SELECT team_id FROM TEAM where teamname1=b.team LIMIT 1) as tcode
                     FROM IE_BatterRecord br, Kbo_BatTotal b
                     WHERE br.PlayerID = b.PCODE
                         AND substring(br.gameID,1,4) = b.GYEAR
@@ -96,7 +115,8 @@ class RegistryPlayerBatterSeason(feed.RelayDatum):
         row['bbhp']=row['bb'] + row['hp']
         row['shf']=row['sh'] + row['sf']
         row['game']=row['gamenum']
-        for delete_key in ['bb', 'hp', 'sh', 'sf', 'err', 'tb', 'gamenum', 'score']:
+        row['avg']=row['hra']
+        for delete_key in ['bb', 'hp', 'sh', 'sf', 'err', 'tb', 'gamenum', 'score', 'hra', 'team', 'gyear', 'gd']:
             del row[delete_key]
         return row
 
@@ -110,7 +130,7 @@ class RegistryPlayerBatterToday(feed.RelayDatum):
                             br.OAB        AS ab,
                             (br.H1+ br.H2 + br.H3 + br.HR)     AS h,
                             br.HR     AS hr,
-                            br.BB     AS bb,
+                            br.BB+br.HBP     AS bbhp,
                             br.RBI     AS rbi,
                             br.SO     AS so,
                             br.Run     AS r
@@ -152,7 +172,7 @@ class RegistryPlayerPitcherSeason(feed.RelayDatum):
                         pt.HIT as hit,
                         pt.HR as hr,
                         pt.KK as kk,
-                        pt.SV as sv
+                        pt.SV as save
                     FROM IE_PitcherRecord pr, Kbo_PitTotal pt
                     WHERE pr.gameID = '%s'
                         AND pt.PCODE = pr.PlayerID
@@ -175,7 +195,7 @@ class RegistryTeamSeason(feed.RelayDatum):
 
     def postprocess(self, row):
         row=super(RegistryTeamSeason, self).postprocess(row)
-        for name_to_remove in ['inn', 'inn2']:
+        for name_to_remove in ['inn', 'inn2', 'gyear']:
             del row[name_to_remove]
         return row
 
@@ -396,7 +416,7 @@ class ScoreBoardBases(feed.RelayDatum):
             raise feed.NoDataFoundForScoreboardError(self.game_code, "IE_BallCount")
         row = rows[0]
 
-        current_batter_list = fetch_current_batter_list(self.db, self.game_code)
+        current_batter_list = fetch_current_offence_batter_list(self.db, self.game_code)
         for k in ['base1', 'base2', 'base3']:
             row[k]=self.find_pcode_of_batorder(row[k], current_batter_list)
         return rows
@@ -406,7 +426,7 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
         return u"registry:scoreboard:%s:waiting_batters" % self.game_code
 
     def fetch(self):
-        current_batter_list=fetch_current_batter_list(self.db, self.game_code)
+        current_batter_list=fetch_current_offence_batter_list(self.db, self.game_code)
         batorder=self.current_batorder(current_batter_list)
 
         from itertools import chain, islice
@@ -433,6 +453,33 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
         else:
             raise ValueError('pcode not found in current_batter_list: %s' % pcode)
 
+class ScoreBoardHomeLineupBatter(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:home:lineup:batter" % self.game_code
+
+    def fetch(self):
+        return fetch_batter_list_of(self.db, self.game_code, 1)
+
+class ScoreBoardAwayLineupBatter(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:away:lineup:batter" % self.game_code
+
+    def fetch(self):
+        return fetch_batter_list_of(self.db, self.game_code, 0)
+        
+class ScoreBoardHomeLineupPitcher(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:home:lineup:pitcher" % self.game_code
+
+    def fetch(self):
+        return fetch_pitcher_list_of(self.db, self.game_code, 1)
+
+class ScoreBoardAwayLineupPitcher(feed.RelayDatumAsList):
+    def json_path(self):
+        return "registry:scoreboard:%s:away:lineup:pitcher" % self.game_code
+
+    def fetch(self):
+        return fetch_pitcher_list_of(self.db, self.game_code, 0)
 # ----------
 
 def current_btop(db, game_code):
@@ -456,16 +503,19 @@ def current_btop(db, game_code):
         raise feed.NoDataFoundForScoreboardError(self.game_code, "IE_LiveText")
     return rows[0]['btop']
 
-def fetch_current_batter_list(db, game_code):
+def fetch_current_offence_batter_list(db, game_code):
     btop=current_btop(db, game_code)
     assert btop in [0, 1], "btop |%d|" % btop
     bhome=((btop==0) and 1) or 0
 
+    return fetch_batter_list_of(db, game_code, bhome)
+
+def fetch_batter_list_of(db, game_code, bhome):
     lineup_sql="""
         SELECT br.bhome as home,
                br.playerID as pcode,
                br.BatOrder as batorder,
-               br.position as position_code
+               br.positionName as position
         FROM IE_BatterRecord br
         INNER JOIN
             Kbo_Person p
@@ -491,6 +541,18 @@ def fetch_current_batter_list(db, game_code):
         del b['is_in_batter_list']
     return current_batter_list
 
+def fetch_pitcher_list_of(db, game_code, bhome):
+    lineup_sql="""
+        SELECT 
+            PlayerID as pcode,
+            SeqNO as seq
+        FROM
+            IE_PitcherRecord
+        WHERE 
+            gameID = '%s' and bhome='%d' 
+        order by SeqNo desc
+    """
+    return db.execute(lineup_sql % (game_code, bhome))
 # ----------
 
 datums = [RegistryPlayerProfile,

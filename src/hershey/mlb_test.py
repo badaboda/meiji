@@ -40,7 +40,7 @@ class FeedAsBootstrapDictTest(FeedTest):
                    (mlb.ScoreBoardWatingBatters, code),]
         initial_dicts=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
-        p(merged)
+        #p(merged)
         self.assertHierachy("registry:scoreboard:%s:home" % code, merged)
         self.assertHierachy("registry:scoreboard:%s:away" % code, merged)
         self.assertHierachy("registry:scoreboard:%s:waiting_batters" % code, merged)
@@ -69,6 +69,33 @@ class FeedAsBootstrapDictTest(FeedTest):
         merged=self.merge(initial_dicts)
         #p(merged)
 
+    def testScoreBoardHomeLineupBatter(self):
+        dict=self.bootstrap_dict(mlb.ScoreBoardHomeLineupBatter, self.game_code)
+        json_path="registry:scoreboard:%s:home:lineup:batter" % self.game_code
+        self.assertHierachy(json_path, dict)
+        #p(dict)
+        self.assertEquals("1848162", self.fetchHierachy(json_path, dict)[0]['pcode'])
+
+    def testScoreBoardAwayLineupBatter(self):
+        dict=self.bootstrap_dict(mlb.ScoreBoardAwayLineupBatter, self.game_code)
+        json_path="registry:scoreboard:%s:away:lineup:batter" % self.game_code
+        self.assertHierachy(json_path, dict)
+        self.assertEquals("10765", self.fetchHierachy(json_path, dict)[0]['pcode'])
+
+    def testScoreBoardHomeLineupPitcher(self):
+        dict=self.bootstrap_dict(mlb.ScoreBoardHomeLineupPitcher, self.game_code)
+        json_path="registry:scoreboard:%s:home:lineup:pitcher" % self.game_code
+        self.assertHierachy(json_path, dict)
+        p(dict)
+        self.assertEquals("12342", self.fetchHierachy(json_path, dict)[0]['pcode'])
+
+    def testScoreBoardAwayLineupPitcher(self):
+        dict=self.bootstrap_dict(mlb.ScoreBoardAwayLineupPitcher, self.game_code)
+        json_path="registry:scoreboard:%s:away:lineup:pitcher" % self.game_code
+        self.assertHierachy(json_path, dict)
+        p(dict)
+        self.assertEquals("10931", self.fetchHierachy(json_path, dict)[0]['pcode'])
+
     def testLeague(self):
         initial_dicts=[
             self.bootstrap_dict(mlb.LeagueTodayGames, self.game_code, datetime.datetime(2009, 07, 11)),
@@ -89,7 +116,7 @@ class FeedAsBootstrapDictTest(FeedTest):
                     mlb.RegistryTeamSeason,
                     mlb.RegistryTeamProfile, ]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
-        p(self.merge(initial_dicts))
+        #p(self.merge(initial_dicts))
 
 if __name__=='__main__':
     unittest.main()
