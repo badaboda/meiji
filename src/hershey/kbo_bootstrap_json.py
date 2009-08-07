@@ -1,7 +1,6 @@
-import MySQLdb
-import sys, pprint
+import sys, MySQLdb
 
-import merge,feed
+import merge, feed, config
 from feed import kbo
 
 def kbo_bootstrap_dict(db, game_code):
@@ -26,9 +25,6 @@ def kbo_bootstrap_dict(db, game_code):
 
 if __name__=='__main__':
     game_code ='20090701HHSK0'
-    db = feed.SportsDatabase(host='sports-livedb1',
-                        user='root', passwd='damman#2',
-                        db='kbo', charset='utf8',
-                        cursorclass=MySQLdb.cursors.DictCursor)
+    db = feed.SportsDatabase(db='kbo', **config.sports_live_db1_credential)
     merged=kbo_bootstrap_dict(db, game_code)
     feed.mypprint(merged, encoding='unicode_escape')

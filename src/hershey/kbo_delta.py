@@ -1,16 +1,12 @@
 import MySQLdb
 import sys, pprint, time
 
-import merge
-import feed
+import merge, feed, config
 from feed import kbo
 
 
 def loop(delta, game_code):
-    db = feed.SportsDatabase(host='sports-livedb1',
-                        user='root', passwd='damman#2',
-                        db='kbo', charset='utf8',
-                        cursorclass=MySQLdb.cursors.DictCursor)
+    db = feed.SportsDatabase(db='kbo', **config.sports_live_db1_credential)
 
     for klass in kbo.datums:
         datum=klass(db, game_code)

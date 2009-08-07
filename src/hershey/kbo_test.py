@@ -1,14 +1,9 @@
 # vim: fileencoding=utf-8 :
 import unittest
-import MySQLdb
-import types
 import datetime
-from pprint import pprint as p
 
-import feed
+import feed, mock, config
 from feed import kbo
-import mock
-
 from all_test import FeedTest
 
 class UtilTest(unittest.TestCase):
@@ -32,10 +27,7 @@ a:c:d
 
 class KboFeedTest(FeedTest):
     def setUp(self):
-        self.db = feed.SportsDatabase(host='sports-livedb1',
-                            user='root', passwd='damman#2',
-                            db='kbo', charset='utf8',
-                            cursorclass=MySQLdb.cursors.DictCursor)
+        self.db = feed.SportsDatabase(db='kbo', **config.sports_live_db1_credential)
         self.game_code ='20090701HHSK0'
 
     def tearDown(self):
@@ -70,7 +62,6 @@ class KboFeedTest(FeedTest):
                    (kbo.ScoreBoardWatingBatters, code),]
         initial_dicts=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
-        #p(merged)
         self.assertHierachy("registry:scoreboard:%s:home" % code, merged)
         self.assertHierachy("registry:scoreboard:%s:away" % code, merged)
         self.assertHierachy("registry:scoreboard:%s:waiting_batters" % code, merged)
@@ -91,7 +82,6 @@ class KboFeedTest(FeedTest):
                        (kbo.ScoreBoardWatingBatters, game_code),]
             initial_dicts+=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
-        #p(merged)
 
     def testLeague(self):
         initial_dicts=[
@@ -99,7 +89,6 @@ class KboFeedTest(FeedTest):
             self.bootstrap_dict(kbo.LeaguePastVsGames, self.game_code)
         ]
         merged=self.merge(initial_dicts)
-        #p(merged)
         self.assertHierachy("league:today_games", merged)
         self.assertHierachy("league:past_vs_games", merged)
         self.assertEquals(3, len(merged['league']['today_games']))
@@ -113,12 +102,10 @@ class KboFeedTest(FeedTest):
                     kbo.RegistryTeamSeason,
                     kbo.RegistryTeamProfile, ]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
-        #p(self.merge(initial_dicts))
 
     def testMetaAndGameCode(self):
         klasses = [kbo.Meta, kbo.GameCode]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
-        #p(self.merge(initial_dicts))
 
     def testScoreboardForNoDataInScheduleTable(self):
         self.assertRaises(feed.NoDataFoundForScoreboardError,
@@ -155,10 +142,7 @@ class KboFeedTest(FeedTest):
 
 class FeedAsDeltaGeneratorInput(unittest.TestCase):
     def setUp(self):
-        self.db = feed.SportsDatabase(host='sports-livedb1',
-                            user='root', passwd='damman#2',
-                            db='kbo', charset='utf8',
-                            cursorclass=MySQLdb.cursors.DictCursor)
+        self.db = feed.SportsDatabase(db='kbo', **config.sports_live_db1_credential)
         self.game_code ='20090701HHSK0'
 
         self.consumer = mock.MockJavascriptConsumer()

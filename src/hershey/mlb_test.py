@@ -1,23 +1,16 @@
 # vim: fileencoding=utf-8 :
 import unittest
-import MySQLdb
-import types
 import datetime
 from pprint import pprint as p
 
-import feed
+import merge, feed, mock, config
 from feed import mlb
-import mock
-import merge
 
 from all_test import FeedTest
 
 class FeedAsBootstrapDictTest(FeedTest):
     def setUp(self):
-        self.db = feed.SportsDatabase(host='sports-livedb1',
-                            user='root', passwd='damman#2',
-                            db='mlb', charset='utf8',
-                            cursorclass=MySQLdb.cursors.DictCursor)
+        self.db = feed.SportsDatabase(db='mlb', **config.sports_live_db1_credential)
         self.game_code ='20090723CCPH0'
 
     def tearDown(self):

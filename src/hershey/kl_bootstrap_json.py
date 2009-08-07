@@ -8,10 +8,7 @@ from feed import kl
 if __name__=='__main__':
     game_code ='20091114'
 
-    db = feed.SportsDatabase(host='sports-livedb1',
-                        user='root', passwd='damman#2',
-                        db='kl', charset='utf8',
-                        cursorclass=MySQLdb.cursors.DictCursor)
+    db = feed.SportsDatabase(db='kl', **config.sports_live_db1_credential)
 
     bootstrap_dicts=[]
     for klass in kl.datums:

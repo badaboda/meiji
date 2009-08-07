@@ -1,22 +1,15 @@
 # vim: fileencoding=utf-8 :
 import unittest
-import types
-import datetime
 from pprint import pprint as p
-import MySQLdb
 
-import feed
+import feed, mock, config
 from feed import npb
-import mock
 
 from all_test import FeedTest
 
 class NpbFeedTest(FeedTest):
     def setUp(self):
-        self.db = feed.SportsDatabase(host='sports-livedb1',
-                            user='root', passwd='damman#2',
-                            db='npb', charset='utf8',
-                            cursorclass=MySQLdb.cursors.DictCursor)
+        self.db = feed.SportsDatabase(db='npb', **config.sports_live_db1_credential)
         self.game_code ='2009072101'
 
     def tearDown(self):
