@@ -1,7 +1,6 @@
-import MySQLdb
-import sys, pprint
+import sys, pprint, MySQLdb
 
-import merge,feed
+import merge, feed
 from feed import kl
 
 

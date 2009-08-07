@@ -1,10 +1,8 @@
 # vim: fileencoding=utf-8 :
-import unittest
-import feed
+import unittest, MySQLdb
+
+import merge, feed, mock
 from feed import kbo
-import mock
-import merge
-import MySQLdb
 
 
 class DeltaGeneratorWithKeyedDatumTest(unittest.TestCase):

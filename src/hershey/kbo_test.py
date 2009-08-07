@@ -1,10 +1,10 @@
 # vim: fileencoding=utf-8 :
-import unittest
-import datetime
+import unittest, datetime
 
 import feed, mock, config
 from feed import kbo
 from all_test import FeedTest
+
 
 class UtilTest(unittest.TestCase):
     def test_hierachy_dict(self):

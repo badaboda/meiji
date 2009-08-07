@@ -1,9 +1,10 @@
 import os, sys, subprocess
+
 import kbo_bootstrap_json
-import config
-import feed
+import feed, config
 import feed.kbo
 import feed.npb
+
 
 class DumpBase(object):
     def __init__(self, credential,  klass_name, league):
@@ -49,7 +50,10 @@ def diff_league(league1, league2):
         diff_dump(DumpTeam(credential, klass_name, league1),
                  DumpTeam(credential, klass_name, league2))
 
-    for klass_name in ['RegistryPlayerBatterSeason', 'RegistryPlayerBatterToday', 'RegistryPlayerPitcherToday', 'RegistryPlayerPitcherSeason']:
+    for klass_name in ['RegistryPlayerBatterSeason', 
+                       'RegistryPlayerBatterToday', 
+                       'RegistryPlayerPitcherToday',
+                       'RegistryPlayerPitcherSeason']:
         diff_dump(DumpPlayer(credential, klass_name, league1), 
              DumpPlayer(credential, klass_name, league2))
 

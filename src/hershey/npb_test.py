@@ -38,7 +38,6 @@ class NpbFeedTest(FeedTest):
                    (npb.ScoreBoardWatingBatters, code),]
         initial_dicts=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
-        #p(merged)
         self.assertHierachy("registry:scoreboard:%s:home" % code, merged)
         self.assertHierachy("registry:scoreboard:%s:away" % code, merged)
         self.assertHierachy("registry:scoreboard:%s:waiting_batters" % code, merged)
@@ -56,12 +55,10 @@ class NpbFeedTest(FeedTest):
                     npb.RegistryTeamSeason,
                     npb.RegistryTeamProfile, ]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
-        #p(self.merge(initial_dicts))
 
     def testMetaAndGameCode(self):
         klasses = [npb.Meta, npb.GameCode]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
-        #p(self.merge(initial_dicts))
 
     def testScoreBoardHomeLineupBatter(self):
         self.assertScoreBoardHomeOrAwayLineUp(

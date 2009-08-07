@@ -33,7 +33,6 @@ class FeedAsBootstrapDictTest(FeedTest):
                    (mlb.ScoreBoardWatingBatters, code),]
         initial_dicts=[self.bootstrap_dict(klass, game_code) for klass, game_code in specs]
         merged=self.merge(initial_dicts)
-        #p(merged)
         self.assertHierachy("registry:scoreboard:%s:home" % code, merged)
         self.assertHierachy("registry:scoreboard:%s:away" % code, merged)
         self.assertHierachy("registry:scoreboard:%s:waiting_batters" % code, merged)
@@ -60,7 +59,6 @@ class FeedAsBootstrapDictTest(FeedTest):
                     #  MLB_ScoreRHEB, MLB_LiveText에 row가 존재하지 않는다
                     pass
         merged=self.merge(initial_dicts)
-        #p(merged)
 
     def testScoreBoardHomeLineupBatter(self):
         self.assertScoreBoardHomeOrAwayLineUp(
@@ -92,7 +90,6 @@ class FeedAsBootstrapDictTest(FeedTest):
             self.bootstrap_dict(mlb.LeaguePastVsGames, self.game_code)
         ]
         merged=self.merge(initial_dicts)
-        #p(merged)
         self.assertHierachy("league:today_games", merged)
         self.assertHierachy("league:past_vs_games", merged)
         self.assertEquals(15, len(merged['league']['today_games']))
@@ -106,7 +103,6 @@ class FeedAsBootstrapDictTest(FeedTest):
                     mlb.RegistryTeamSeason,
                     mlb.RegistryTeamProfile, ]
         initial_dicts=[self.bootstrap_dict(klass) for klass in klasses]
-        #p(self.merge(initial_dicts))
 
 if __name__=='__main__':
     unittest.main()

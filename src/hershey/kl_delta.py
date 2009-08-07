@@ -1,5 +1,4 @@
-import MySQLdb
-import sys, pprint, time
+import sys, time, MySQLdb
 
 import merge, feed, config
 from feed import kl
