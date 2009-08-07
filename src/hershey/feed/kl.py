@@ -273,18 +273,17 @@ class RegistryScoreBoardStatus(RelayDatum):
                 meet_year='%s' and meet_seq='%s' and game_id='%s'
             order by s_e_time desc limit 1
         """ % (self.game_code, self.meet_year, self.meet_seq, self.game_id))
+
+    def flags_to_bool(self, row, key, flags):
+        v=row[key].strip().lower()
+        assert v in flags
+        return v == flags[0]
     
     def postprocess(self, row):
         row=super(RelayDatum, self).postprocess(row)
-        if row['is_end_game'].strip().lower() == 'y':
-            row['is_end_game'] = bool(True)
-        elif row['is_end_game'].strip().lower() == 'n':
-            row['is_end_game'] = bool(False)
-        if row['is_end_half'].strip().lower() == 'e':
-            row['is_end_half'] = bool(True)
-        elif row['is_end_half'].strip().lower() == 's':
-            row['is_end_half'] = bool(False)
-        return row;
+        row['is_end_game']=self.flags_to_bool(row, 'is_end_game', 'yn')
+        row['is_end_half']=self.flags_to_bool(row, 'is_end_half', 'es')
+        return row
 
 class RegistryScoreBoardShotPosition(feed.RelayDatumAsList):
     def json_path(self):
