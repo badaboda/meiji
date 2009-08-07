@@ -25,5 +25,5 @@ if __name__=='__main__':
                         db='npb', charset='utf8',
                         cursorclass=MySQLdb.cursors.DictCursor)
     merged=npb_bootstrap_dict(db, game_code)
-    feed.mypprint(merged)
+    feed.mypprint(merged, encoding='unicode_escape')
 

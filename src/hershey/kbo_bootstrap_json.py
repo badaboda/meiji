@@ -31,4 +31,4 @@ if __name__=='__main__':
                         db='kbo', charset='utf8',
                         cursorclass=MySQLdb.cursors.DictCursor)
     merged=kbo_bootstrap_dict(db, game_code)
-    feed.mypprint(merged)
+    feed.mypprint(merged, encoding='unicode_escape')

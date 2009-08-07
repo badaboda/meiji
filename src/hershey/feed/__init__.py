@@ -236,7 +236,7 @@ def write(o):
     sys.stdout.write(str(o))
     #sys.stdout.write("\n")
 
-def mypprint(o, write=write):
+def mypprint(o, write=write, encoding='utf-8'):
     if type(o)==type({}):
         write('{')
         for k in o.keys():
@@ -257,7 +257,7 @@ def mypprint(o, write=write):
             write(',',)
         write(']')
     elif type(o)==type(u''):
-        write('"%s"' % o.encode('utf-8'))
+        write('"%s"' % o.encode(encoding))
     elif type(o)==type(''):
         write('"%s"' % o)
     elif type(o) in [type(0), type(0L), type(0.3)]:
