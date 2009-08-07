@@ -1,8 +1,7 @@
 # vim: fileencoding=utf-8 :
-import re, time, types, datetime
+import re, types, datetime
 
 import feed
-hierachy_dict=feed.hierachy_dict
 
 class RegistryPlayerProfile(feed.RelayDatum):
     def json_path(self):

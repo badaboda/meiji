@@ -1,9 +1,8 @@
 #!/usr/bin/env python2.6
 # vim: et sts=4 sw=4 ts=4 ai fileencoding=utf8 :
-import re, time, types, datetime
+import re, types, datetime
 
 import feed
-hierachy_dict=feed.hierachy_dict
 
 class LiveText(feed.RelayDatumAsList):
     def json_path(self):
