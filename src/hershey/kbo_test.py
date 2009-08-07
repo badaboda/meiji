@@ -129,28 +129,28 @@ class KboFeedTest(FeedTest):
         self.bootstrap_dict(kbo.ScoreBoard, '20090730HTLT0')
 
     def testScoreBoardHomeLineupBatter(self):
-        dict=self.bootstrap_dict(kbo.ScoreBoardHomeLineupBatter, self.game_code)
-        json_path="registry:scoreboard:%s:home:lineup:batter" % self.game_code
-        self.assertHierachy(json_path, dict)
-        self.assertEquals("77609", self.fetchHierachy(json_path, dict)[0]['pcode'])
+        self.assertScoreBoardHomeOrAwayLineUp(
+            kbo.ScoreBoardHomeLineupBatter,
+            "registry:scoreboard:%s:home:lineup:batter",
+            "77609")
 
     def testScoreBoardAwayLineupBatter(self):
-        dict=self.bootstrap_dict(kbo.ScoreBoardAwayLineupBatter, self.game_code)
-        json_path="registry:scoreboard:%s:away:lineup:batter" % self.game_code
-        self.assertHierachy(json_path, dict)
-        self.assertEquals("72139", self.fetchHierachy(json_path, dict)[0]['pcode'])
+        self.assertScoreBoardHomeOrAwayLineUp(
+            kbo.ScoreBoardAwayLineupBatter,
+            "registry:scoreboard:%s:away:lineup:batter",
+            "72139")
 
     def testScoreBoardHomeLineupPitcher(self):
-        dict=self.bootstrap_dict(kbo.ScoreBoardHomeLineupPitcher, self.game_code)
-        json_path="registry:scoreboard:%s:home:lineup:pitcher" % self.game_code
-        self.assertHierachy(json_path, dict)
-        self.assertEquals("74857", self.fetchHierachy(json_path, dict)[0]['pcode'])
+        self.assertScoreBoardHomeOrAwayLineUp(
+            kbo.ScoreBoardHomeLineupPitcher,
+            "registry:scoreboard:%s:home:lineup:pitcher",
+            "74857")
 
     def testScoreBoardAwayLineupPitcher(self):
-        dict=self.bootstrap_dict(kbo.ScoreBoardAwayLineupPitcher, self.game_code)
-        json_path="registry:scoreboard:%s:away:lineup:pitcher" % self.game_code
-        self.assertHierachy(json_path, dict)
-        self.assertEquals("93715", self.fetchHierachy(json_path, dict)[0]['pcode'])
+        self.assertScoreBoardHomeOrAwayLineUp(
+            kbo.ScoreBoardAwayLineupPitcher,
+            "registry:scoreboard:%s:away:lineup:pitcher",
+            "93715")
 
 
 class FeedAsDeltaGeneratorInput(unittest.TestCase):

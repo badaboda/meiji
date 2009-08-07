@@ -70,31 +70,28 @@ class FeedAsBootstrapDictTest(FeedTest):
         #p(merged)
 
     def testScoreBoardHomeLineupBatter(self):
-        dict=self.bootstrap_dict(mlb.ScoreBoardHomeLineupBatter, self.game_code)
-        json_path="registry:scoreboard:%s:home:lineup:batter" % self.game_code
-        self.assertHierachy(json_path, dict)
-        #p(dict)
-        self.assertEquals("1848162", self.fetchHierachy(json_path, dict)[0]['pcode'])
+        self.assertScoreBoardHomeOrAwayLineUp(
+            mlb.ScoreBoardHomeLineupBatter,
+            "registry:scoreboard:%s:home:lineup:batter",
+            "1848162")
 
     def testScoreBoardAwayLineupBatter(self):
-        dict=self.bootstrap_dict(mlb.ScoreBoardAwayLineupBatter, self.game_code)
-        json_path="registry:scoreboard:%s:away:lineup:batter" % self.game_code
-        self.assertHierachy(json_path, dict)
-        self.assertEquals("10765", self.fetchHierachy(json_path, dict)[0]['pcode'])
+        self.assertScoreBoardHomeOrAwayLineUp(
+            mlb.ScoreBoardAwayLineupBatter,
+            "registry:scoreboard:%s:away:lineup:batter",
+            "10765")
 
     def testScoreBoardHomeLineupPitcher(self):
-        dict=self.bootstrap_dict(mlb.ScoreBoardHomeLineupPitcher, self.game_code)
-        json_path="registry:scoreboard:%s:home:lineup:pitcher" % self.game_code
-        self.assertHierachy(json_path, dict)
-        p(dict)
-        self.assertEquals("12342", self.fetchHierachy(json_path, dict)[0]['pcode'])
+        self.assertScoreBoardHomeOrAwayLineUp(
+            mlb.ScoreBoardHomeLineupPitcher,
+            "registry:scoreboard:%s:home:lineup:pitcher",
+            "12342")
 
     def testScoreBoardAwayLineupPitcher(self):
-        dict=self.bootstrap_dict(mlb.ScoreBoardAwayLineupPitcher, self.game_code)
-        json_path="registry:scoreboard:%s:away:lineup:pitcher" % self.game_code
-        self.assertHierachy(json_path, dict)
-        p(dict)
-        self.assertEquals("10931", self.fetchHierachy(json_path, dict)[0]['pcode'])
+        self.assertScoreBoardHomeOrAwayLineUp(
+            mlb.ScoreBoardAwayLineupPitcher,
+            "registry:scoreboard:%s:away:lineup:pitcher",
+            "10931")
 
     def testLeague(self):
         initial_dicts=[

@@ -27,6 +27,12 @@ class FeedTest(unittest.TestCase):
     def merge(self, dicts):
         return reduce(lambda x,y: merge._merge_insert(x, y), dicts)
 
+    def assertScoreBoardHomeOrAwayLineUp(self, klass, expected_json_path, expected_first_pcode):
+        dict=self.bootstrap_dict(klass, self.game_code)
+        json_path=expected_json_path % self.game_code
+        self.assertHierachy(json_path, dict)
+        self.assertEquals(expected_first_pcode, self.fetchHierachy(json_path, dict)[0]['pcode'])
+
 
 if __name__=='__main__':
     suite=unittest.TestLoader().loadTestsFromNames([
