@@ -21,8 +21,7 @@ class MockDatum(feed.RelayDatum):
         pass
 
 class MockDatumAsAtom(MockDatum, feed.RelayDatumAsAtom):
-    def as_delta_generator_input(self):
-        return feed.dict_to_list_pair(self.delta_feed[0])
+    pass
 
 class MockDatumAsList(MockDatum, feed.RelayDatumAsList):
     pass

@@ -94,9 +94,11 @@ class DeltaGenerator:
                     pass
                 else:
                     if not isinstance(datum, RelayDatumAsAtom):
-                        self.consumer.feed(tag, datum, dict(list_of_pair), i1, i2, j1, j2)
+                        delta=Delta(dict(list_of_pair), i1, i2, j1, j2)
                     else:
-                        self.consumer.feed(tag, datum, dict((list_of_pair,)), i1, i2, j1, j2)
+                        delta=Delta(dict((list_of_pair,)), i1, i2, j1, j2)
+
+                    self.consumer.feed(tag, datum, delta)
 
         self.old_input[json_path] = current
 
@@ -123,6 +125,11 @@ class DeltaGenerator:
             else:
                 raise ValueError, 'unknown tag %s' % (tag,)
 
+class Delta(object):
+    def __init__(self, dict, i1, i2, j1, j2):
+        self.dict=dict
+        self.i1, self.i2, self.j1, self.j2 = i1, i2, j1, j2
+
 class JavascriptSysoutConsumer:
     def __init__(self):
         pass
@@ -130,49 +137,18 @@ class JavascriptSysoutConsumer:
     def emit(self, s):
         print s
 
-    def feed(self, tag, datum, dict, i1, i2, j1, j2):
-        json_path = datum.json_path()
-        if tag in ['insert']:
-            if isinstance(datum, RelayDatumAsList):
-                self.emit('db.%s.push(%s);' % (json_path, str(dict)))   # splice로 하면 좋은데 여러개가 동시에 지워졌을 때 
-                                                                        # index가 바뀌어 버리는 것을 처리하기가 마땅치가 않다
-                                                                        #   야구에서는 list를 쓰는 것이 끝에만 추가되는 것이라 
-                                                                        #   array.push로 써도 돌아는 간다
-            else:
-                self.emit(self.insert_javascript(json_path, dict))
-        elif tag=='delete':
-            if isinstance(datum, RelayDatumAsList):
-                self.emit('db.%s.splice(%d, %d);' % (json_path, i1, i2-i1))
-            else:
-                self.emit(self.delete_javascript(json_path, dict))
-        elif tag=='replace':
-            if not isinstance(datum, RelayDatumAsAtom):
-                self.emit(self.insert_javascript(json_path, dict))
-            else:
-                self.emit(self.atom_replace_javascript(json_path, dict))
-        else:
-            raise NotImplementedError
+    def emit_insert(self, datum, delta):
+        self.emit(datum.javascript_insert_output(delta))   
 
-    def insert_javascript(self, json_path, dict):
-        return "%s=%s;" % (self._js_variable("db", json_path, dict), str(dict))
+    def emit_delete(self, datum, delta):
+        self.emit(datum.javascript_delete_output(delta))
 
-    def atom_replace_javascript(self, json_path, dict):
-        k, v=dict.items()[0]
-        return "%s.%s=%s;" % (self._js_variable("db", json_path, dict), k, v)
+    def emit_replace(self, datum, delta):
+        self.emit(datum.javascript_replace_output(delta))
 
-    def delete_javascript(self, json_path, dict):
-        return "delete %s;" % (self._js_variable("db", json_path, dict))
-
-    def _js_variable(self, root, json_path, dict):
-        keys=json_path.split(":")
-        js_key_parts=[root]
-        for i, k in enumerate(keys):
-            is_placeholder=lambda s: s.startswith("**")
-            if is_placeholder(k):
-                js_key_parts.append("['%s']" % dict[k[2:]])
-            else:
-                js_key_parts.append(".%s" % k)
-        return ''.join(js_key_parts)
+    def feed(self, tag, datum, delta):
+        f=getattr(self, 'emit_%s' % tag)
+        f(datum, delta)
 
 # ----------
 
@@ -232,11 +208,41 @@ class RelayDatum(object):
         else:
             return row
 
+    def javascript_insert_output(self, delta):
+        dict=delta.dict
+        return "%s=%s;" % (self._js_variable("db", self.json_path(), dict), str(dict))
+
+    def javascript_delete_output(self, delta):
+        return "delete %s;" % (self._js_variable("db", self.json_path(), delta.dict))
+
+    def javascript_replace_output(self, delta):
+        dict=delta.dict
+        return "%s=%s;" % (self._js_variable("db", self.json_path(), dict), str(dict))
+
+    def _js_variable(self, root, json_path, dict):
+        keys=json_path.split(":")
+        js_key_parts=[root]
+        for i, k in enumerate(keys):
+            is_placeholder=lambda s: s.startswith("**")
+            if is_placeholder(k):
+                js_key_parts.append("['%s']" % dict[k[2:]])
+            else:
+                js_key_parts.append(".%s" % k)
+        return ''.join(js_key_parts)
+
 class RelayDatumAsList(RelayDatum):
     def as_bootstrap_dict(self):
         self.ensure_rows()
         paths=self.json_path().split(':')
         return hierachy_dict(paths, self.rows)
+
+    def javascript_insert_output(self, delta):
+        return 'db.%s.push(%s);' % (self.json_path(), str(delta.dict))   # splice로 하면 좋은데 여러개가 동시에 지워졌을 때 
+                                                                # index가 바뀌어 버리는 것을 처리하기가 마땅치가 않다
+                                                                #   야구에서는 list를 쓰는 것이 끝에만 추가되는 것이라 
+                                                                #   array.push로 써도 돌아는 간다
+    def javascript_delete_output(self, delta):
+        return 'db.%s.splice(%d, %d);' % (self.json_path(), delta.i1, delta.i2-delta.i1)
 
 class RelayDatumAsAtom(RelayDatum):
     def as_bootstrap_dict(self):
@@ -248,6 +254,12 @@ class RelayDatumAsAtom(RelayDatum):
         self.ensure_rows()
         assert len(self.rows)==1
         return dict_to_list_pair(self.rows[0])
+
+    def javascript_replace_output(self, delta):
+        d=delta.dict
+        assert len(d.keys()) == 1
+        k, v=d.items()[0]
+        return "%s.%s=%s;" % (self._js_variable("db", self.json_path(), d), k, v)
 
 # ----------
 
