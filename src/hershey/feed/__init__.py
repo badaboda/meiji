@@ -26,6 +26,18 @@ def dict_to_list_pair(d):
 def lowercase_dict_key(d):
     return dict([(k.lower(),v) for k,v in d.items()])
 
+def safe_int(v, default=0):
+    try:
+        return int(v)
+    except ValueError:
+        return default
+
+def safe_float(v, default=0.0):
+    try:
+        return float(v)
+    except ValueError:
+        return default
+
 def hierachy_dict(hierachy_parent_names, leaf):
     orig=r={}
     for n in hierachy_parent_names[:-1]:
@@ -204,9 +216,16 @@ class RelayDatum(object):
         if type(row) == types.DictType:
             if row.has_key('INPUTTIME'):
                 del row['INPUTTIME']
+            for k in row.keys():
+                self.ensure_none_if_empty_string(row, k)
             return lowercase_dict_key(row)
         else:
             return row
+
+    def ensure_none_if_empty_string(self, row, key):
+        v=row[key]
+        if type(v) in [type(''), type(u'')] and row[key].strip() == '':
+            row[key] = None
 
     def javascript_insert_output(self, delta):
         dict=delta.dict
@@ -314,4 +333,20 @@ def __dump_keynames(dict, paths, f):
         f.write(':'.join(paths+[str(k)]) + "\n")
         if type(v)==type({}):
             __dump_keynames(dict[k], paths+[str(k)], f)
+
+
+def dump_keyname_and_value(dict):
+    import StringIO
+    f=StringIO.StringIO()
+    __dump_keyname_and_value(dict, [], f)
+    return f.getvalue().encode('utf-8')
+
+def __dump_keyname_and_value(dict, paths, f):
+    for k in sorted(dict.keys()):
+        v=dict[k]
+        if type(v)==type({}):
+            __dump_keyname_and_value(dict[k], paths+[str(k)], f)
+        else:
+            f.write('%20s\t%10s\t%10s\n' % (':'.join(paths+[str(k)]), v, type(v)))
+
 

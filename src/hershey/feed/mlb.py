@@ -68,8 +68,12 @@ class RegistryPlayerBatterSeason(feed.RelayDatum):
         row['bbhp']=row['bb'] + row['hp']
         row['shf']=row['sh'] + row['sf']
         row['run']=row['r']
-        for delete_key in ['r', 'bb', 'hp', 'sh', 'sf', 'teamcode', 'inputtime', 'gp', 'pa', 'playerid', 'savg', 'year']:
-            del row[delete_key]
+
+        for cast_field_name in ['avg', 'obp', 'ops', 'slg']:
+            row[cast_field_name]=feed.safe_float(row[cast_field_name])
+
+        for name_to_remove in ['r', 'bb', 'hp', 'sh', 'sf', 'teamcode', 'inputtime', 'gp', 'pa', 'playerid', 'savg', 'year', 'stint']:
+            del row[name_to_remove]
         return row
 
 class RegistryPlayerBatterToday(feed.RelayDatum):
@@ -165,6 +169,10 @@ class RegistryTeamSeason(feed.RelayDatum):
         row['gb']=row['games_behind']
         row['win']=row['won']
         row['lose']=row['lost']
+
+        for cast_field_name in ['gb', 'percentage']:
+            row[cast_field_name]=feed.safe_float(row[cast_field_name])
+
         for name_to_remove in ['gameplayed', 'games_behind', 'won', 'lost']:
             del row[name_to_remove]
         return row
@@ -198,12 +206,12 @@ class ScoreBoard(feed.RelayDatum):
                    HTeam_code as home_tcode,
                    VTeam_Name as away_team,
                    VTeam_code as away_tcode,
-                   park as stadium,
+                   (select krstadium from MLB_Ballpark where ballparkid=a.park) as stadium,
                    substring(k_time, 1, 4) as gyear,
                    substring(k_time, 6, 7) as gmonth,
                    substring(k_time, 9, 10) as gday,
                    substring(k_time, 12, 16) as gtime
-            FROM MLB_Live_Schedule
+            FROM MLB_Live_Schedule a
             WHERE gmkey = '%s'
         """ % (self.game_code))
         if len(rows) == 0:
@@ -262,6 +270,9 @@ class ScoreBoard(feed.RelayDatum):
         row=super(ScoreBoard, self).postprocess(row)
         row['game_datetime']="%s-%s-%sT%sZ" % (row['gyear'], row['gmonth'], row['gday'],
                                                re.search('\d+:\d+', row['gtime']).group(0))
+        for cast_field_name in ['season_year']:
+            row[cast_field_name]=feed.safe_int(row[cast_field_name])
+
         for name_to_remove in ['gyear', 'gmonth', 'gday', 'gtime']:
             del row[name_to_remove]
         return row

@@ -194,7 +194,10 @@ class RegistryTeamSeason(feed.RelayDatum):
 
     def postprocess(self, row):
         row=super(RegistryTeamSeason, self).postprocess(row)
-        for name_to_remove in ['inn', 'inn2', 'gyear']:
+        for cast_field_name in ['era', 'dra', 'bra', 'hra', 'lra']:
+            row[cast_field_name]=feed.safe_float(row[cast_field_name])
+
+        for name_to_remove in ['inn', 'inn2', 'gyear', 'continue', 'league', 'team']:
             del row[name_to_remove]
         return row
 
@@ -338,6 +341,9 @@ class ScoreBoard(feed.RelayDatum):
         row=super(ScoreBoard, self).postprocess(row)
         row['game_datetime']="%s-%s-%sT%sZ" % (row['gyear'], row['gmonth'], row['gday'],
                                                re.search('\d+:\d+', row['gtime']).group(0))
+        for cast_field_name in ['season_year']:
+            row[cast_field_name]=feed.safe_int(row[cast_field_name])
+
         for name_to_remove in ['gyear', 'gmonth', 'gday', 'gtime']:
             del row[name_to_remove]
         row['double_header'] = bool(row['double_header'])

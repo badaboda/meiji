@@ -90,8 +90,11 @@ class RegistryPlayerBatterSeason(feed.RelayDatum):
     def postprocess(self, row):
         row=super(RegistryPlayerBatterSeason, self).postprocess(row)
         row['avg']=row['hra']
-        for delete_key in ['game_flag', 'pa_flag', 'gyear', 'hra']:
-            del row[delete_key]
+        for cast_field_name in ['avg', 'obp', 'ops', 'slg']:
+            row[cast_field_name]=feed.safe_float(row[cast_field_name])
+
+        for name_to_remove in ['game_flag', 'pa_flag', 'gyear', 'hra', 'team']:
+            del row[name_to_remove]
         return row
 
 
@@ -164,6 +167,15 @@ class RegistryTeamSeason(feed.RelayDatum):
                     where substring('%s',1,4) = tr.GYEAR
                 """ % (self.game_code))
         return rows
+
+    def postprocess(self, row):
+        row=super(RegistryTeamSeason, self).postprocess(row)
+        row['wra']=float(row['wra'])
+        row['gb']=feed.safe_int(row['gb'], 0)
+        for name_to_remove in ['team']:
+            del row[name_to_remove]
+        return row
+
 
 class RegistryTeamProfile(feed.RelayDatum):
     def json_path(self):
@@ -249,6 +261,7 @@ class ScoreBoard(feed.RelayDatum):
         row=super(ScoreBoard, self).postprocess(row)
         t = re.search('\d+', row['k_time']).group(0)
         row['game_datetime']="%s-%s-%sT%s:%sZ" % (row['gyear'], row['gmonth'], row['gday'], t[:2], t[2:4])
+        
         for name_to_remove in ['gyear', 'gmonth', 'gday', 'k_time']:
             del row[name_to_remove]
         row['double_header'] = bool(row['double_header'])
