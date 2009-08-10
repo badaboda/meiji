@@ -8,15 +8,21 @@ class MockJavascriptConsumer(feed.JavascriptSysoutConsumer):
     def emit(self, s):
         self.lst.append(s)
 
-class MockDatum:
+class MockDatum(feed.RelayDatum):
     def __init__(self, json_path, delta_feed):
         assert type(delta_feed)==types.ListType
         self._json_path=json_path
-        self.delta_feed=delta_feed
+        self.rows=self.delta_feed=delta_feed
+
     def json_path(self):
         return self._json_path
+
+    def ensure_rows(self):
+        pass
+
+class MockDatumAsAtom(MockDatum, feed.RelayDatumAsAtom):
     def as_delta_generator_input(self):
-        return feed.list_of_dict_to_list_of_pairs(self.delta_feed)
+        return feed.dict_to_list_pair(self.delta_feed[0])
 
 class MockDatumAsList(MockDatum, feed.RelayDatumAsList):
     pass

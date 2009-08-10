@@ -17,8 +17,11 @@ def _dict_to_tuple_recursive(dict):
             result.append((k, v))
     return tuple(result)
 
-def list_of_dict_to_list_of_pairs(list_of_dict):
+def list_of_dict_to_list_of_list_of_pair(list_of_dict):
     return tuple(_dict_to_tuple_recursive(d) for d in list_of_dict)
+
+def dict_to_list_pair(d):
+    return _dict_to_tuple_recursive(d)  
 
 def lowercase_dict_key(d):
     return dict([(k.lower(),v) for k,v in d.items()])
@@ -90,7 +93,11 @@ class DeltaGenerator:
                 if tag == 'equal':
                     pass
                 else:
-                    self.consumer.feed(tag, datum, dict(list_of_pair), i1, i2, j1, j2)
+                    if not isinstance(datum, RelayDatumAsAtom):
+                        self.consumer.feed(tag, datum, dict(list_of_pair), i1, i2, j1, j2)
+                    else:
+                        self.consumer.feed(tag, datum, dict((list_of_pair,)), i1, i2, j1, j2)
+
         self.old_input[json_path] = current
 
     def diff_seq_specs(self, old, current):
@@ -139,12 +146,19 @@ class JavascriptSysoutConsumer:
             else:
                 self.emit(self.delete_javascript(json_path, dict))
         elif tag=='replace':
-            self.emit(self.insert_javascript(json_path, dict))
+            if not isinstance(datum, RelayDatumAsAtom):
+                self.emit(self.insert_javascript(json_path, dict))
+            else:
+                self.emit(self.atom_replace_javascript(json_path, dict))
         else:
             raise NotImplementedError
 
     def insert_javascript(self, json_path, dict):
         return "%s=%s;" % (self._js_variable("db", json_path, dict), str(dict))
+
+    def atom_replace_javascript(self, json_path, dict):
+        k, v=dict.items()[0]
+        return "%s.%s=%s;" % (self._js_variable("db", json_path, dict), k, v)
 
     def delete_javascript(self, json_path, dict):
         return "delete %s;" % (self._js_variable("db", json_path, dict))
@@ -179,7 +193,7 @@ class RelayDatum(object):
 
     def as_delta_generator_input(self):
         self.ensure_rows()
-        return list_of_dict_to_list_of_pairs(self.rows)
+        return list_of_dict_to_list_of_list_of_pair(self.rows)
 
     def __parse_json_path(self, json_path):
         paths=json_path.split(':')
@@ -229,6 +243,11 @@ class RelayDatumAsAtom(RelayDatum):
         self.ensure_rows()
         paths=self.json_path().split(':')
         return hierachy_dict(paths, self.rows[0])
+
+    def as_delta_generator_input(self):
+        self.ensure_rows()
+        assert len(self.rows)==1
+        return dict_to_list_pair(self.rows[0])
 
 # ----------
 

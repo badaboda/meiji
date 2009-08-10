@@ -29,6 +29,12 @@ class DeltaGeneratorWithKeyedDatumTest(unittest.TestCase):
         self.assertEquals(
             ["db.livetext.push({'a': 2, 'b': 2});"], self.consumer.lst)
 
+    def test_mockdatum_as_atom(self):
+        self.delta.feed(mock.MockDatumAsAtom("scoreboard", [{"a": 1, "b": 2}]))
+        self.delta.feed(mock.MockDatumAsAtom("scoreboard", [{"a": 2, "b": 3}]))
+        self.assertEquals(
+            ['db.scoreboard.a=2;', 'db.scoreboard.b=3;'], self.consumer.lst)
+
     def test_waiting_batters(self):
         self.delta.feed(mock.MockDatumAsList("waiting_batters", [{ "a": 1, "b": 1 },
                                                           { "a": 2, "b": 2 },
