@@ -505,7 +505,7 @@ def current_btop(db, game_code):
         LIMIT 1
     """ % game_code)
     if len(rows) == 0:
-        raise feed.NoDataFoundForScoreboardError(self.game_code, "IE_LiveText")
+        raise feed.NoDataFoundForScoreboardError(game_code, "IE_LiveText")
     return rows[0]['btop']
 
 def fetch_current_offence_batter_list(db, game_code):
@@ -522,12 +522,6 @@ def fetch_batter_list_of(db, game_code, bhome):
                br.BatOrder as batorder,
                br.positionName as position
         FROM IE_BatterRecord br
-        INNER JOIN
-            Kbo_Person p
-            ON (br.PlayerID = p.PCODE)
-        LEFT OUTER JOIN
-            Kbo_BatTotal bt
-            ON (br.PlayerID = bt.PCODE)
         WHERE
             br.gameid = '%s'
             AND br.bhome = %d
