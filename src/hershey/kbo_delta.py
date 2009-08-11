@@ -5,9 +5,7 @@ import merge, feed, config
 from feed import kbo
 
 
-def loop(delta, game_code):
-    db = feed.SportsDatabase(db='kbo', **config.sports_live_db1_credential)
-
+def loop(db, delta, game_code):
     for klass in kbo.datums:
         datum=klass(db, game_code)
         delta.feed(datum)

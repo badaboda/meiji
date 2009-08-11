@@ -8,3 +8,11 @@ sports_live_db1_credential={
     'cursorclass': MySQLdb.cursors.DictCursor
 }
 
+enex_credential={
+    'host': 'enex', 
+    'user': 'root',
+    'passwd': '',
+    'charset': 'utf8',
+    'cursorclass': MySQLdb.cursors.DictCursor
+}
+

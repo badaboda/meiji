@@ -181,11 +181,12 @@ class KboDeltaLoopTest(unittest.TestCase):
         self.game_code ='20090701HHSK0'
         self.consumer = mock.MockJavascriptConsumer()
         self.delta=feed.DeltaGenerator(self.consumer)
+        self.db = feed.SportsDatabase(db='kbo', **config.sports_live_db1_credential)
 
     def testDeltaLoop(self):
         import kbo_delta
-        kbo_delta.loop(self.delta, self.game_code)
-        kbo_delta.loop(self.delta, self.game_code)
+        kbo_delta.loop(self.db, self.delta, self.game_code)
+        kbo_delta.loop(self.db, self.delta, self.game_code)
 
 if __name__=='__main__':
     unittest.main()

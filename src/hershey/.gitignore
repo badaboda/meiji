@@ -2,3 +2,4 @@ meiji
 *.json
 Session.vim
 *.tmp
+*.sample
