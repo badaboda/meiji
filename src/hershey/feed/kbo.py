@@ -399,6 +399,7 @@ class ScoreBoardBases(feed.RelayDatum):
         return u"registry:scoreboard:**game_code:bases"
 
     def find_pcode_of_batorder(self, batorder, current_batter_list):
+        assert len(current_batter_list)!=0
         assert type(batorder)==types.IntType, "batorder should be int but %s" % type(batorder)
         if batorder == 0:
             return None
@@ -406,7 +407,7 @@ class ScoreBoardBases(feed.RelayDatum):
             if b['batorder'] == batorder:
                 return b['pcode']
         else:
-            raise ValueError('batorder not found: %d' % batorder)
+            raise ValueError('batorder not found: %d, %s' % (batorder, str(current_batter_list)))
 
     def fetch(self):
         rows=self.db.execute("""
@@ -448,6 +449,7 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
         return rows[0]['batter']
 
     def current_batorder(self, batter_list):
+        assert len(batter_list)!=0
         pcode=self.current_batter_pcode()
         for batter in batter_list:
             if batter['pcode']==pcode:
@@ -456,7 +458,7 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
                 assert 0 < batorder < 10
                 return batorder
         else:
-            raise ValueError('pcode not found in current_batter_list: %s' % pcode)
+            raise ValueError('pcode not found in current_batter_list: (%s, %s)' % (pcode, str(batter_list)))
 
 class ScoreBoardHomeLineupBatter(feed.RelayDatumAsList):
     def json_path(self):
