@@ -256,15 +256,18 @@ class RelayDatumAsList(RelayDatum):
         return hierachy_dict(paths, self.rows)
 
     def javascript_insert_output(self, delta):
-        return 'db.%s.push(%s);' % (self.json_path(), str(delta.dict))   # splice로 하면 좋은데 여러개가 동시에 지워졌을 때 
-                                                                # index가 바뀌어 버리는 것을 처리하기가 마땅치가 않다
-                                                                #   야구에서는 list를 쓰는 것이 끝에만 추가되는 것이라 
-                                                                #   array.push로 써도 돌아는 간다
+        # splice로 하면 좋은데 여러개가 동시에 지워졌을 때 
+        # index가 바뀌어 버리는 것을 처리하기가 마땅치가 않다
+        #   야구에서는 list를 쓰는 것이 끝에만 추가되는 것이라 
+        #   array.push로 써도 돌아는 간다
+        return '%s.push(%s);' % (self._js_variable("db", self.json_path(), delta.dict), str(delta.dict))   
+
     def javascript_delete_output(self, delta):
-        return 'db.%s.splice(%d, %d);' % (self.json_path(), delta.i1, delta.i2-delta.i1)
+        return '%s.splice(%d, %d);' % (self._js_variable("db", self.json_path(), delta.dict), delta.i1, delta.i2-delta.i1)
 
     def javascript_replace_output(self, delta):
-        return 'db.%s.splice(%d, %d, %s);' % (self.json_path(), delta.i1, delta.i2-delta.i1, str(delta.dict))
+        #return "%s=%s;" % (self._js_variable("db", self.json_path(), dict), str(dict))
+        return '%s.splice(%d, %d, %s);' % (self._js_variable("db", self.json_path(), delta.dict), delta.i1, delta.i2-delta.i1, str(delta.dict))
         #return "%s.%s=%s;" % (self._js_variable("db", self.json_path(), d), k, v)
 
 class RelayDatumAsAtom(RelayDatum):
@@ -277,6 +280,14 @@ class RelayDatumAsAtom(RelayDatum):
         self.ensure_rows()
         assert len(self.rows)==1
         return dict_to_list_pair(self.rows[0])
+
+    def javascript_insert_output(self, delta):
+        d=delta.dict
+        k, v=d.items()[0]
+        r=[]
+        for k, v in d.items():
+            r.append("%s['%s']=%s;" % (self._js_variable("db", self.json_path(), d), k, v))
+        return '\x20'.join(r)
 
     def javascript_replace_output(self, delta):
         d=delta.dict
