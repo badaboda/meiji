@@ -14,11 +14,16 @@ if __name__=='__main__':
 
     start=datetime.datetime(2009, 7, 21, 18, 30, 0)
     end=datetime.datetime(2009, 7, 21, 18, 40, 0)
-    for sqls_within_interval in sql_from_to(f, start, end, datetime.timedelta(seconds=10)):
+    for sqls_within_interval in sql_from_to(f, 'npb', 'kbo', start, end, datetime.timedelta(seconds=10)):
         for sql in sqls_within_interval:
-            print sql
+            sql=sql.decode('euc-kr').encode('utf-8')
+            #print sql
             db.execute(sql)
 
         print '-' * 30
-        import kbo_delta
-        kbo_delta.loop(db, delta, game_code)
+        try:
+            import kbo_delta
+            kbo_delta.loop(db, delta, game_code)
+        except feed.NoDataFoundForScoreboardError:
+            print feed.NoDataFoundForScoreboardError
+
