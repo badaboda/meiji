@@ -19,7 +19,7 @@ class DeltaGeneratorWithKeyedDatumTest(unittest.TestCase):
         self.delta.feed(mock.MockDatum(self.KEYED_JSON_PATH, [{ "pcode": "79260", "name": "장원삼" },
                                                               { "pcode": "98260", "name": "정삼흠" }]))
         self.assertEquals(
-            ["db.registry.players['98260'].profile={'pcode': '98260', 'name': %s};"%repr('정삼흠')],
+            ["db['registry']['players']['98260']['profile']={'pcode': '98260', 'name': %s};"%repr('정삼흠')],
             self.consumer.lst)
 
     def test_insert_list_datum(self):
@@ -33,7 +33,7 @@ class DeltaGeneratorWithKeyedDatumTest(unittest.TestCase):
         self.delta.feed(mock.MockDatumAsAtom("scoreboard", [{"a": 1, "b": 2}]))
         self.delta.feed(mock.MockDatumAsAtom("scoreboard", [{"a": 2, "b": 3}]))
         self.assertEquals(
-            ['db.scoreboard.a=2;', 'db.scoreboard.b=3;'], self.consumer.lst)
+            ["db['scoreboard']['a']=2;", "db['scoreboard']['b']=3;"], self.consumer.lst)
 
     def test_waiting_batters(self):
         self.delta.feed(mock.MockDatumAsList("waiting_batters", [{ "a": 1, "b": 1 },
@@ -56,7 +56,7 @@ class DeltaGeneratorWithKeyedDatumTest(unittest.TestCase):
                                                         { "pcode": "98260", "name": "정삼흠" }]))
         self.delta.feed(mock.MockDatum(self.KEYED_JSON_PATH, [{ "pcode": "79260", "name": "장원삼" }]))
         self.assertEquals(
-            ["delete db.registry.players['98260'].profile;"],
+            ["delete db['registry']['players']['98260']['profile'];"],
             self.consumer.lst)
 
     def test_replace(self):
@@ -65,7 +65,7 @@ class DeltaGeneratorWithKeyedDatumTest(unittest.TestCase):
         self.delta.feed(mock.MockDatum(self.KEYED_JSON_PATH, [{ "pcode": "79260", "name": "장원삼2" },
                                                         { "pcode": "98260", "name": "정삼흠" }]))
         self.assertEquals(
-            ["db.registry.players['79260'].profile={'pcode': '79260', 'name': %s};"%repr('장원삼2')],
+            ["db['registry']['players']['79260']['profile']={'pcode': '79260', 'name': %s};"%repr('장원삼2')],
             self.consumer.lst)
 
 class DictMergeTest(unittest.TestCase):

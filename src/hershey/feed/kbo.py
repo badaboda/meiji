@@ -264,9 +264,9 @@ class LeaguePastVsGames(feed.RelayDatumAsList):
         self.ensure_rows()
         return tuple(self.rows)
 
-class ScoreBoard(feed.RelayDatum):
+class ScoreBoard(feed.RelayDatumAsAtom):
     def json_path(self):
-        return u"registry:scoreboard:**game_code"
+        return u"registry:scoreboard:%s" % self.game_code
 
     def fetch_kbo_schedule(self):
         rows=self.db.execute("""
@@ -433,7 +433,10 @@ class ScoreBoardWatingBatters(feed.RelayDatumAsList):
 
     def fetch(self):
         current_batter_list=fetch_current_offence_batter_list(self.db, self.game_code)
-        batorder=self.current_batorder(current_batter_list)
+        try:
+            batorder=self.current_batorder(current_batter_list)
+        except ValueError:
+            return []
 
         from itertools import chain, islice
         return list(islice(chain(current_batter_list, current_batter_list), batorder, batorder+3))

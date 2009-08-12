@@ -102,7 +102,7 @@ class DeltaGenerator:
         json_path=datum.json_path()
         if self.old_input.has_key(json_path):
             for tag, list_of_pair, i1, i2, j1, j2 in self.diff_seq_specs(self.old_input[json_path], current):
-                if tag == 'equal':
+                if tag=='equal':
                     pass
                 else:
                     if not isinstance(datum, RelayDatumAsAtom):
@@ -117,7 +117,6 @@ class DeltaGenerator:
     def diff_seq_specs(self, old, current):
         cruncher = SequenceMatcher(None, old, current)
         for tag, i1, i2, j1, j2 in cruncher.get_opcodes():
-            #print tag, i1, i2, j1, j2 
             a = []
             if tag == "insert":
                 for t in current[j1:j2]:
@@ -246,7 +245,8 @@ class RelayDatum(object):
             if is_placeholder(k):
                 js_key_parts.append("['%s']" % dict[k[2:]])
             else:
-                js_key_parts.append(".%s" % k)
+                js_key_parts.append("['%s']" % k)
+                #js_key_parts.append(".%s" % k)
         return ''.join(js_key_parts)
 
 class RelayDatumAsList(RelayDatum):
@@ -263,6 +263,10 @@ class RelayDatumAsList(RelayDatum):
     def javascript_delete_output(self, delta):
         return 'db.%s.splice(%d, %d);' % (self.json_path(), delta.i1, delta.i2-delta.i1)
 
+    def javascript_replace_output(self, delta):
+        return 'db.%s.splice(%d, %d, %s);' % (self.json_path(), delta.i1, delta.i2-delta.i1, str(delta.dict))
+        #return "%s.%s=%s;" % (self._js_variable("db", self.json_path(), d), k, v)
+
 class RelayDatumAsAtom(RelayDatum):
     def as_bootstrap_dict(self):
         self.ensure_rows()
@@ -276,9 +280,11 @@ class RelayDatumAsAtom(RelayDatum):
 
     def javascript_replace_output(self, delta):
         d=delta.dict
-        assert len(d.keys()) == 1
         k, v=d.items()[0]
-        return "%s.%s=%s;" % (self._js_variable("db", self.json_path(), d), k, v)
+        r=[]
+        for k, v in d.items():
+            r.append("%s['%s']=%s;" % (self._js_variable("db", self.json_path(), d), k, v))
+        return '\x20'.join(r)
 
 # ----------
 
